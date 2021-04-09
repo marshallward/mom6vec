@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Marshall Ward">
+  <meta name="dcterms.date" content="2021-04-21">
+  <title>A Tale of Two Architectures</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="./reveal.js/dist/reveal.css">
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="./reveal.js/css/theme/gfdl.css" id="theme">
+  <!-- Explicitly add zenburn for highlight support -->
+  <link rel="stylesheet" href="./reveal.js/plugin/highlight/zenburn.css" id="theme">
+  <!-- Printing and PDF exports -->
+  <script>
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? './reveal.js/css/print/pdf.scss' : './reveal.js/css/print/paper.scss';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+  <!--[if lt IE 9]>
+  <script src="./reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+  <base href="./index.html">
+</head>
+<body>
+  <div class="reveal"
+       style="background: url(img/bg_gfdl.jpg);
+              background-size: cover;">
+
+    <!-- Original ratio: 10.04" x 7.08" -->
+    <div style="height: 100vh; position: absolute; bottom: -50vh; left: -40vh">
+      <img style="height: 100vh; width: 142vh" src="img/bg_globe.png">
+    </div>
+
+    <header style="width: 10vh; position: absolute; bottom: 2vh; right: 2vh;">
+      <img src="img/noaa_logo.png">
+    </header>
+
+    <footer style="font-size: 1pc; position: absolute; bottom: 2%; left: 2%;">
+      <!-- code>https://marshallward.org/mom6vv</code> -->
+      <code><p><a href="https://marshallward.org/ogrp2021.html">https://marshallward.org/ogrp2021.html</a></p></code>
+    </footer>
+
+    <div class="slides">
+
+<section id="title-slide">
+  <!--div class="reveal" style="text-align: right;">
+    <img src="img/noaa_logo.png"
+         style="background: none; border: none; box-shadow: none;
+         width: 30%"
+         alt="NCI">
+  </div-->
+  <h1 class="title">A Tale of Two Architectures</h1>
+  <p class="author" style="text-align: right;">Marshall Ward</p>
+  <p class="date" style="text-align: right;">2021-04-21</p>
+  <!-- Currently cannot add notes to a title slide, so have to do manually-->
+  <aside class="notes">
+    
+  </aside>
+</section>
+
+<section id="peak-performance" class="title-slide slide level1">
+<h1>Peak Performance</h1>
+<p><span class="math display">\[W \le N \times f \times I_\text{vec}\]</span></p>
+<table>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(W\)</span></td>
+<td>FLOPs per second ("work")</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(N\)</span></td>
+<td># of CPUs</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(f\)</span></td>
+<td>Cycles per second</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(I_\text{vec}\)</span></td>
+<td>FLOPs per cycle</td>
+</tr>
+</tbody>
+</table>
+<aside class="notes">
+<p>This is a form of the so-called "iron law" of peak performance.</p>
+<p>It is normally written as an expression of time, rather than rate of work, but I think this inverse form is better suited for our discussion.</p>
+<p>The "work" here is written as the number of FLOPs (or floating point operations) per second, but it could be generalized to other units computational work.</p>
+<p>The first two terms are very straightforward: N is the number of CPUs and f is the clock rate, or cycles per second. More CPUs and faster clock rate means more work.</p>
+<p>The third term here is more interesting, and is the focus here. This represents the ability of the CPU to do concurrent work on a single core.</p>
+</aside>
+</section>
+
+<section id="clock-speed" class="title-slide slide level1">
+<h1>Clock Speed</h1>
+<p><img data-src="img/clockspeed.svg" style="width:70.0%" alt="image" /></p>
+<aside class="notes">
+<p>This is a plot of CPU clock speeds from CPUDB. The database goes from about 1970 to 2014, but the situation has not changed much since then.</p>
+<p>The trend is clear: Clock speed increased exponentially until about 2005. After that, it flattened out around 3GHz. After that, people stopped talking much about clock speeds.</p>
+<p>This is a reflection of Moore's law (transistor rate) but is better explained by the breakdown of Dennard scaling.</p>
+<ul>
+<li>P ~ f</li>
+<li>P/A ~ const</li>
+<li>transitor density drops exponentially =&gt; power drops too</li>
+<li>=&gt; increase f to balance P</li>
+</ul>
+<p>After 2005, thermal leakage led to P &gt;&gt; A</p>
+</aside>
+</section>
+
+<section id="cpu-scaling" class="title-slide slide level1">
+<h1>CPU Scaling</h1>
+<p>Tension between local (hyperbolic) solvers</p>
+<p><span class="math display">\[\begin{aligned}
+\frac{\partial \mathbf{u}}{\partial t}
+   &amp;= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
+\end{aligned}\]</span></p>
+<p>and global (elliptic) solvers</p>
+<p><span class="math display">\[\begin{aligned}
+\nabla^2 p
+   &amp;= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
+      + \nabla \cdot \mathbf{F} \\
+   &amp;\approx \nabla \cdot \mathbf{F} \text{(?)} \\
+\end{aligned}\]</span></p>
+<p>... unless you can cheat (aka oceanography)</p>
+</section>
+
+<section id="vectorization" class="title-slide slide level1">
+<h1>Vectorization</h1>
+<p><img data-src="img/specfp.svg" alt="image" /></p>
+<aside class="notes">
+<p>:</p>
+<p>Main comments:</p>
+<ul>
+<li><p>Despite the end of clock speed increase, FP rates continue to rise</p></li>
+<li><p>But after ~2004, the rate definitely drops. What causes it?</p></li>
+<li><p>Less important: What happened in the 90s?</p>
+<p>This was the era of high-end vector CPUs (DEC, SPARC, etc). As they failed to keep up with commodity x86 chips, they left the market.</p></li>
+<li><p>Even less important: The "blob" at the end is emergence of mobile chips?</p></li>
+</ul>
+<p>What is SPECfp?</p>
+<p>This is a renormalized plot of the SPECfp scores over time.</p>
+<p>CPUs are assigned a "score" based on their performance of a suite of FP-based models. The number is somewhat arbitrary.</p>
+<p>Unfortunately they periodically change these tests and SPEC strongly discourages comparison across tests, but in the words of Jurgen Willebrand, no one can stop me!</p>
+<p>We roughly normalize along Intel trends, especially 95-&gt;2k, which is why the "high end" cloud permeates.</p>
+<p>Don't take these numbers too literally, especially my renormalization which I didn't properly calibrate.</p>
+</aside>
+</section>
+
+<section id="final" class="title-slide slide level1">
+<h1>Final</h1>
+<p>The end</p>
+<aside class="notes">
+<p>End slide</p>
+</aside>
+</section>
+    </div>
+  </div>
+
+  <script src="./reveal.js/dist/reveal.js"></script>
+  <script src="./reveal.js/plugin/math/math.js"></script>
+  <script src="./reveal.js/plugin/notes/notes.js"></script>
+  <script src="./reveal.js/plugin/highlight/highlight.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        // Display the page number of the current slide
+        slideNumber: true,
+        // Push each slide change to the browser history
+        history: true,
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js',
+          config: 'TeX-AMS_HTML-full',
+          //TeX: {
+          //  inlineMath: [['\\(','\\)']],
+          //  displayMath: [['\\[','\\]']],
+          //  balanceBraces: true,
+          //  processEscapes: false,
+          //  processRefs: true,
+          //  processEnvironments: true,
+          //  preview: 'TeX',
+          //  skipTags: ['script','noscript','style','textarea','pre','code'],
+          //  ignoreClass: 'tex2jax_ignore',
+          //  processClass: 'tex2jax_process'
+          //},
+        },
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: './reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: './reveal.js/plugin/zoom-js/zoom.js', async: true },
+          { src: './reveal.js/plugin/notes/notes.js', async: true }
+        ],
+        plugins : [ RevealMath, RevealNotes, RevealHighlight],
+      });
+    </script>
+    </body>
+</html>

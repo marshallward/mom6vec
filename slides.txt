@@ -1,23 +1,133 @@
-==================
-Presentation Title
-==================
+===========================
+A Tale of Two Architectures
+===========================
 
-:author: Mister Robot
-:description: A one-line summary of the presentation.
-:date: 1997-10-01
-:url: https://marshallward.org/sample.html
+:author: Marshall Ward
+:description: Overview of MOM6 programming rules for improved performance.
+:date: 2021-04-21
+:url: https://marshallward.org/ogrp2021.html
 :preface:
    Introductory comments, written to slide notes
 
 
-Slide Title
-===========
+Peak Performance
+================
 
-Slide contents
+.. math::
+
+   W \le N \times f \times I_\text{vec}
+
+====================    =========================
+:math:`W`               FLOPs per second ("work")
+:math:`N`               # of CPUs
+:math:`f`               Cycles per second
+:math:`I_\text{vec}`    FLOPs per cycle
+====================    =========================
 
 .. notes::
-   
-   Some Slide notes
+
+   This is a form of the so-called "iron law" of peak performance.
+
+   It is normally written as an expression of time, rather than rate of work,
+   but I think this inverse form is better suited for our discussion.
+
+   The "work" here is written as the number of FLOPs (or floating point
+   operations) per second, but it could be generalized to other units
+   computational work.
+
+   The first two terms are very straightforward: N is the number of CPUs and f
+   is the clock rate, or cycles per second.  More CPUs and faster clock rate
+   means more work.
+
+   The third term here is more interesting, and is the focus here.  This
+   represents the ability of the CPU to do concurrent work on a single core.
+
+
+Clock Speed
+===========
+
+.. image:: img/clockspeed.svg
+   :width: 70%
+
+.. notes::
+
+   This is a plot of CPU clock speeds from CPUDB.  The database goes from about
+   1970 to 2014, but the situation has not changed much since then.
+
+   The trend is clear:  Clock speed increased exponentially until about 2005.
+   After that, it flattened out around 3GHz.  After that, people stopped
+   talking much about clock speeds.
+
+   This is a reflection of Moore's law (transistor rate) but is better
+   explained by the breakdown of Dennard scaling.
+
+   * P ~ f
+   * P/A ~ const
+   * transitor density drops exponentially => power drops too
+   * => increase f to balance P
+
+   After 2005, thermal leakage led to P >> A
+
+
+CPU Scaling
+===========
+
+Tension between local (hyperbolic) solvers
+
+.. math::
+
+   \frac{\partial \mathbf{u}}{\partial t}
+      &= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
+
+and global (elliptic) solvers
+
+.. math::
+
+   \nabla^2 p
+      &= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
+         + \nabla \cdot \mathbf{F} \\
+      &\approx \nabla \cdot \mathbf{F} \text{(?)} \\
+
+... unless you can cheat (aka oceanography)
+
+
+Vectorization
+=============
+
+.. image:: img/specfp.svg
+
+.. notes:::
+
+   Main comments:
+
+   * Despite the end of clock speed increase, FP rates continue to rise
+
+   * But after ~2004, the rate definitely drops.  What causes it?
+
+   * Less important: What happened in the 90s?
+
+     This was the era of high-end vector CPUs (DEC, SPARC, etc).
+     As they failed to keep up with commodity x86 chips, they left the market.
+
+   * Even less important: The "blob" at the end is emergence of mobile chips?
+
+   What is SPECfp?
+
+   This is a renormalized plot of the SPECfp scores over time.
+
+   CPUs are assigned a "score" based on their performance of a suite of
+   FP-based models.  The number is somewhat arbitrary.
+
+   Unfortunately they periodically change these tests and SPEC strongly
+   discourages comparison across tests, but in the words of Jurgen Willebrand,
+   no one can stop me!
+
+   We roughly normalize along Intel trends, especially 95->2k, which is why the
+   "high end" cloud permeates.
+
+   Don't take these numbers too literally, especially my renormalization which
+   I didn't properly calibrate.
+
 
 
 Final
