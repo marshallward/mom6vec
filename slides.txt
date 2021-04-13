@@ -29,7 +29,7 @@ Peak Performance
    This is a form of the so-called "iron law" of peak performance.
 
    It is normally written as an expression of time, rather than rate of work,
-   but I think this inverse form is better suited for our discussion.
+   but I think this inverse form is better suited for this discussion.
 
    The "work" here is written as the number of FLOPs (or floating point
    operations) per second, but it could be generalized to other units
@@ -41,6 +41,34 @@ Peak Performance
 
    The third term here is more interesting, and is the focus here.  This
    represents the ability of the CPU to do concurrent work on a single core.
+
+
+CPU Scaling
+===========
+
+.. image:: img/scaling_ocn.svg
+
+
+Fluid Dynamics Scaling
+----------------------
+
+Tension between local (hyperbolic) solvers
+
+.. math::
+
+   \frac{\partial \mathbf{u}}{\partial t}
+      &= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
+
+and global (elliptic) solvers
+
+.. math::
+
+   \nabla^2 p
+      &= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
+         + \nabla \cdot \mathbf{F} \\
+      &\approx \nabla \cdot \mathbf{F} \text{(?)} \\
+
+... unless you can cheat (aka oceanography)
 
 
 Clock Speed
@@ -69,26 +97,11 @@ Clock Speed
    After 2005, thermal leakage led to P >> A
 
 
-CPU Scaling
-===========
+Clock Speed vs # of Cores
+-------------------------
 
-Tension between local (hyperbolic) solvers
+Using more cores further reduces clock speed!
 
-.. math::
-
-   \frac{\partial \mathbf{u}}{\partial t}
-      &= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
-
-and global (elliptic) solvers
-
-.. math::
-
-   \nabla^2 p
-      &= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
-         + \nabla \cdot \mathbf{F} \\
-      &\approx \nabla \cdot \mathbf{F} \text{(?)} \\
-
-... unless you can cheat (aka oceanography)
 
 
 Vectorization
@@ -129,12 +142,71 @@ Vectorization
    I didn't properly calibrate.
 
 
+Arithmetic Intensity
+====================
 
-Final
-=====
+FLOP rate
 
-The end
 
-.. notes::
+MOM6 sample config
+==================
 
-   End slide
+Describe the "benchmark"
+
+
+Profiling with ``perf``
+=======================
+
+Quick sample overview
+
+
+MOM6 FLOP rates
+===============
+
+Do FLOP rates for the model and various subroutines
+
+- EOS_Wright: 10 GFLOP/s
+- btstep: 0.4 GFLOP/s
+
+
+Example 1: MOM_hor_visc
+=======================
+
+- Large do-loops of many arrays
+
+- Cost of if-blocks
+
+- Stack limits?
+
+
+Example 2: CoradCalc
+====================
+
+- Gather disparate memory accesses
+
+
+Example 3: Vertical Viscosity
+=============================
+
+- if(do_I(:))
+
+
+Example 3: ``btstep``
+=====================
+
+* ijk -> kij vectorization
+* "override_limits"
+
+
+Hierarchy of Performance
+========================
+
+* Enable vectorization
+
+* Eliminate RAM-bound operations (~2GFLOP/s)
+
+   * i.e. reduce memory accesses
+
+* Think about algorithm
+
+  * Reduce arithmetic intensity

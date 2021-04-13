@@ -94,13 +94,35 @@
 </table>
 <aside class="notes">
 <p>This is a form of the so-called "iron law" of peak performance.</p>
-<p>It is normally written as an expression of time, rather than rate of work, but I think this inverse form is better suited for our discussion.</p>
+<p>It is normally written as an expression of time, rather than rate of work, but I think this inverse form is better suited for this discussion.</p>
 <p>The "work" here is written as the number of FLOPs (or floating point operations) per second, but it could be generalized to other units computational work.</p>
 <p>The first two terms are very straightforward: N is the number of CPUs and f is the clock rate, or cycles per second. More CPUs and faster clock rate means more work.</p>
 <p>The third term here is more interesting, and is the focus here. This represents the ability of the CPU to do concurrent work on a single core.</p>
 </aside>
 </section>
 
+<section>
+<section id="cpu-scaling" class="title-slide slide level1">
+<h1>CPU Scaling</h1>
+<p><img data-src="img/scaling_ocn.svg" alt="image" /></p>
+</section>
+<section id="fluid-dynamics-scaling" class="slide level2">
+<h2>Fluid Dynamics Scaling</h2>
+<p>Tension between local (hyperbolic) solvers</p>
+<p><span class="math display">\[\begin{aligned}
+\frac{\partial \mathbf{u}}{\partial t}
+   &amp;= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
+\end{aligned}\]</span></p>
+<p>and global (elliptic) solvers</p>
+<p><span class="math display">\[\begin{aligned}
+\nabla^2 p
+   &amp;= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
+      + \nabla \cdot \mathbf{F} \\
+   &amp;\approx \nabla \cdot \mathbf{F} \text{(?)} \\
+\end{aligned}\]</span></p>
+<p>... unless you can cheat (aka oceanography)</p>
+</section></section>
+<section>
 <section id="clock-speed" class="title-slide slide level1">
 <h1>Clock Speed</h1>
 <p><img data-src="img/clockspeed.svg" style="width:70.0%" alt="image" /></p>
@@ -117,24 +139,10 @@
 <p>After 2005, thermal leakage led to P &gt;&gt; A</p>
 </aside>
 </section>
-
-<section id="cpu-scaling" class="title-slide slide level1">
-<h1>CPU Scaling</h1>
-<p>Tension between local (hyperbolic) solvers</p>
-<p><span class="math display">\[\begin{aligned}
-\frac{\partial \mathbf{u}}{\partial t}
-   &amp;= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
-\end{aligned}\]</span></p>
-<p>and global (elliptic) solvers</p>
-<p><span class="math display">\[\begin{aligned}
-\nabla^2 p
-   &amp;= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
-      + \nabla \cdot \mathbf{F} \\
-   &amp;\approx \nabla \cdot \mathbf{F} \text{(?)} \\
-\end{aligned}\]</span></p>
-<p>... unless you can cheat (aka oceanography)</p>
-</section>
-
+<section id="clock-speed-vs-of-cores" class="slide level2">
+<h2>Clock Speed vs # of Cores</h2>
+<p>Using more cores further reduces clock speed!</p>
+</section></section>
 <section id="vectorization" class="title-slide slide level1">
 <h1>Vectorization</h1>
 <p><img data-src="img/specfp.svg" alt="image" /></p>
@@ -157,12 +165,74 @@
 </aside>
 </section>
 
-<section id="final" class="title-slide slide level1">
-<h1>Final</h1>
-<p>The end</p>
-<aside class="notes">
-<p>End slide</p>
-</aside>
+<section id="arithmetic-intensity" class="title-slide slide level1">
+<h1>Arithmetic Intensity</h1>
+<p>FLOP rate</p>
+</section>
+
+<section id="mom6-sample-config" class="title-slide slide level1">
+<h1>MOM6 sample config</h1>
+<p>Describe the "benchmark"</p>
+</section>
+
+<section id="profiling-with-perf" class="title-slide slide level1">
+<h1>Profiling with <code>perf</code></h1>
+<p>Quick sample overview</p>
+</section>
+
+<section id="mom6-flop-rates" class="title-slide slide level1">
+<h1>MOM6 FLOP rates</h1>
+<p>Do FLOP rates for the model and various subroutines</p>
+<ul>
+<li>EOS_Wright: 10 GFLOP/s</li>
+<li>btstep: 0.4 GFLOP/s</li>
+</ul>
+</section>
+
+<section id="example-1-mom_hor_visc" class="title-slide slide level1">
+<h1>Example 1: MOM_hor_visc</h1>
+<ul>
+<li>Large do-loops of many arrays</li>
+<li>Cost of if-blocks</li>
+<li>Stack limits?</li>
+</ul>
+</section>
+
+<section id="example-2-coradcalc" class="title-slide slide level1">
+<h1>Example 2: CoradCalc</h1>
+<ul>
+<li>Gather disparate memory accesses</li>
+</ul>
+</section>
+
+<section id="example-3-vertical-viscosity" class="title-slide slide level1">
+<h1>Example 3: Vertical Viscosity</h1>
+<ul>
+<li>if(do_I(:))</li>
+</ul>
+</section>
+
+<section id="example-3-btstep" class="title-slide slide level1">
+<h1>Example 3: <code>btstep</code></h1>
+<ul>
+<li>ijk -&gt; kij vectorization</li>
+<li>"override_limits"</li>
+</ul>
+</section>
+
+<section id="hierarchy-of-performance" class="title-slide slide level1">
+<h1>Hierarchy of Performance</h1>
+<ul>
+<li><p>Enable vectorization</p></li>
+<li><p>Eliminate RAM-bound operations (~2GFLOP/s)</p>
+<ul>
+<li class="fragment">i.e. reduce memory accesses</li>
+</ul></li>
+<li><p>Think about algorithm</p>
+<ul>
+<li>Reduce arithmetic intensity</li>
+</ul></li>
+</ul>
 </section>
     </div>
   </div>
