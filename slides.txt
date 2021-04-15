@@ -159,6 +159,8 @@ Vector Instructions
 
 Gaea C4 (Xeon E5-2697 v4, "Broadwell")
 
+:math:`x_1 \leftarrow x_2 + x_3`
+
 ======   ==========  =======  ======
 Instr.   Size        GFLOP/s  Obs.
 ======   ==========  =======  ======
@@ -189,7 +191,9 @@ TODO
 Concurrency
 ===========
 
-TODO
+.. image:: img/broadwell_exc.svg
+
+2 instr. per cycle, even FMA
 
  
 Single core performance
