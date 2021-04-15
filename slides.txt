@@ -48,6 +48,8 @@ CPU Scaling
 
 .. image:: img/scaling_ocn.svg
 
+Resilient, but CFL-bound
+
 
 Fluid Dynamics Scaling
 ----------------------
@@ -142,6 +144,60 @@ Vectorization
    I didn't properly calibrate.
 
 
+Intel normalization
+-------------------
+
+.. image:: img/specfp_intel.svg
+
+.. notes::
+
+   Showing the normalization of Intel-based architectures.
+
+
+Vector Instructions
+===================
+
+Gaea C4 (Xeon E5-2697 v4, "Broadwell")
+
+======   ==========  =======  ======
+Instr.   Size        GFLOP/s  Obs.
+======   ==========  =======  ======
+MMX      2 SP        7.2      -
+SSE      4 SP/2 DP   14.4     14.395
+AVX      8 SP/4 DP   28.8     28.792
+AVX512   16 SP/8 DP  57.6     -
+======   ==========  =======  ======
+
+:math:`f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}`
+
+.. notes::
+
+   sse_add GFLOP/s: 14.395 (14.395 / thread)
+   sse_fma GFLOP/s: 28.792 (28.792 / thread)
+   sse_fmac GFLOP/s: 57.576 (57.576 / thread)
+   avx_add GFLOP/s: 28.790 (28.790 / thread)
+   avx_mac GFLOP/s: 57.576 (57.576 / thread)
+   avx_fma GFLOP/s: 57.583 (57.583 / thread)
+
+
+Fused-Multiply Add
+==================
+
+TODO
+
+
+Concurrency
+===========
+
+TODO
+
+ 
+Single core performance
+=======================
+
+.. image:: img/gaea_flops.svg
+
+
 Arithmetic Intensity
 ====================
 
@@ -163,20 +219,107 @@ Quick sample overview
 MOM6 FLOP rates
 ===============
 
-Do FLOP rates for the model and various subroutines
 
-- EOS_Wright: 10 GFLOP/s
-- btstep: 0.4 GFLOP/s
+========================== ===== =======
+Subroutine                 %time GFLOP/s
+========================== ===== =======
+btstep                     12.94 0.89
+horizontal_viscosity       6.98  2.30
+vertvisc_coef              6.36  1.29
+coradcalc                  4.58  2.68
+int_density_dz_wright      4.14  8.60
+zonal_flux_adjust          3.59  3.44
+set_merid_bt_cont          3.41  3.17
+find_coupling_coef         3.40  2.50
+========================== ===== =======
 
 
-Example 1: MOM_hor_visc
-=======================
+With modules...
+---------------
 
-- Large do-loops of many arrays
 
-- Cost of if-blocks
+======================  ========================== ===== =======
+Module                  Subroutine                 %time GFLOP/s
+======================  ========================== ===== =======
+MOM_barotropic          btstep                     12.94 0.89
+MOM_hor_visc            horizontal_viscosity       6.98  2.30
+MOM_vert_friction       vertvisc_coef              6.36  1.29
+MOM_Coriolisadv         coradcalc                  4.58  2.68
+MOM_EOS_Wright          int_density_dz_wright      4.14  8.60
+MOM_continuity_ppm      zonal_flux_adjust          3.59  3.44
+MOM_continuity_ppm      set_merid_bt_cont          3.41  3.17
+MOM_vert_friction       find_coupling_coef         3.40  2.50
+======================  ========================== ===== =======
 
-- Stack limits?
+
+The rest
+--------
+
+======================  ========================== ===== =======
+Module                  Subroutine                 %time GFLOP/s
+======================  ========================== ===== =======
+MOM_continuity_ppm      zonal_flux_layer            3.29    3.54
+MOM_continuity_ppm      meridional_flux_adjust      3.28    3.95
+MOM_continuity_ppm      zonal_mass_flux             3.09    3.88
+MOM_dynamics_split_rk2  step_MOM_dyn_split_rk2      3.09    1.31
+MOM_vert_friction       vertvisc_remnant            2.86    2.16
+MOM_continuity_ppm      ppm_limit_pos               2.72    1.59
+MOM_continuity_ppm      meridional_mass_flux        2.46    4.16
+mpp_domains_mod         mpp_do_group_update_r8      2.28    0.00
+MOM_vert_friction       vertvisc                    2.00    2.06
+MOM_thickness_diffuse   thickness_diffuse_full      1.92    3.78
+<runtime>               memset_avx2_unaligned_erms  1.61    0.16
+MOM_barotropic          btcalc                      1.45    0.50
+======================  ========================== ===== =======
+
+
+
+Horizontal Viscosity
+==========================
+
+.. include:: src/MOM_hor_visc.F90
+   :code:
+   :start-line: 831
+   :end-line: 958
+   :number-lines: 831
+   :data-line-numbers: 1|2-6|7-13|14-18|20-73|127
+
+
+Non-vectorized code
+===================
+
+.. code:: x86asm
+
+   │      │833    Shear_mag = sqrt(sh_xx(i,j)*sh_xx(i,j) + &
+   │ 0.70 │         vaddsd   %xmm13,%xmm12,%xmm14
+   │ 1.62 │         vsqrtsd  %xmm14,%xmm14,%xmm14
+   │ 6.53 │         vmovsd   %xmm14,-0x8e8(%rbp)
+
+
+==========  ============
+``vaddsd``  Serial add
+``vaddpd``  Parallel add
+==========  ============
+
+
+Excessive Stack
+===============
+
+.. code:: x86asm
+
+  │      │919    Ah = MAX(MAX(CS%Ah_bg_xx(i,j), AhSm), AhLth)
+  │      │         lea      (%rax,%rdx,8),%rdi
+  │      │         lea      (%rdi,%rsi,1),%r8
+  │ 0.39 │         vmovsd   (%r8,%r9,8),%xmm0
+  │ 0.01 │         vmaxsd   -0x13f8(%rbp),%xmm0,%xmm0
+  │ 2.34 │         vmaxsd   -0x13f0(%rbp),%xmm0,%xmm0
+  │ 0.42 │         vmovsd   %xmm0,-0x1468(%rbp)
+
+======   ===================
+lea      Compute mem address
+vmovsd   Serial move
+vmaxsd   Serial max
+======   ===================
 
 
 Example 2: CoradCalc
@@ -196,6 +339,13 @@ Example 3: ``btstep``
 
 * ijk -> kij vectorization
 * "override_limits"
+
+
+Mystery Problems
+================
+
+* MOM_hor_visc and the stack
+*
 
 
 Hierarchy of Performance

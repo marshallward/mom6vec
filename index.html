@@ -105,6 +105,7 @@
 <section id="cpu-scaling" class="title-slide slide level1">
 <h1>CPU Scaling</h1>
 <p><img data-src="img/scaling_ocn.svg" alt="image" /></p>
+<p>Resilient, but CFL-bound</p>
 </section>
 <section id="fluid-dynamics-scaling" class="slide level2">
 <h2>Fluid Dynamics Scaling</h2>
@@ -143,6 +144,7 @@
 <h2>Clock Speed vs # of Cores</h2>
 <p>Using more cores further reduces clock speed!</p>
 </section></section>
+<section>
 <section id="vectorization" class="title-slide slide level1">
 <h1>Vectorization</h1>
 <p><img data-src="img/specfp.svg" alt="image" /></p>
@@ -164,6 +166,72 @@
 <p>Don't take these numbers too literally, especially my renormalization which I didn't properly calibrate.</p>
 </aside>
 </section>
+<section id="intel-normalization" class="slide level2">
+<h2>Intel normalization</h2>
+<p><img data-src="img/specfp_intel.svg" alt="image" /></p>
+<aside class="notes">
+<p>Showing the normalization of Intel-based architectures.</p>
+</aside>
+</section></section>
+<section id="vector-instructions" class="title-slide slide level1">
+<h1>Vector Instructions</h1>
+<p>Gaea C4 (Xeon E5-2697 v4, "Broadwell"</p>
+<table>
+<thead>
+<tr class="header">
+<th>Instr.</th>
+<th>Size</th>
+<th>GFLOP/s</th>
+<th>Obs.</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>MMX</td>
+<td>2 SP</td>
+<td>7.2</td>
+<td>-</td>
+</tr>
+<tr class="even">
+<td>SSE</td>
+<td>4 SP/2 DP</td>
+<td>14.4</td>
+<td>14.395</td>
+</tr>
+<tr class="odd">
+<td>AVX</td>
+<td>8 SP/4 DP</td>
+<td>28.8</td>
+<td>28.792</td>
+</tr>
+<tr class="even">
+<td>AVX512</td>
+<td>16 SP/8 DP</td>
+<td>57.6</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><span class="math inline">\(f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}\)</span></p>
+<aside class="notes">
+<p>sse_add GFLOP/s: 14.395 (14.395 / thread) sse_fma GFLOP/s: 28.792 (28.792 / thread) sse_fmac GFLOP/s: 57.576 (57.576 / thread) avx_add GFLOP/s: 28.790 (28.790 / thread) avx_mac GFLOP/s: 57.576 (57.576 / thread) avx_fma GFLOP/s: 57.583 (57.583 / thread)</p>
+</aside>
+</section>
+
+<section id="fused-multiply-add" class="title-slide slide level1">
+<h1>Fused-Multiply Add</h1>
+<p>TODO</p>
+</section>
+
+<section id="concurrency" class="title-slide slide level1">
+<h1>Concurrency</h1>
+<p>TODO</p>
+</section>
+
+<section id="single-core-performance" class="title-slide slide level1">
+<h1>Single core performance</h1>
+<p><img data-src="img/gaea_flops.svg" alt="image" /></p>
+</section>
 
 <section id="arithmetic-intensity" class="title-slide slide level1">
 <h1>Arithmetic Intensity</h1>
@@ -180,22 +248,444 @@
 <p>Quick sample overview</p>
 </section>
 
+<section>
 <section id="mom6-flop-rates" class="title-slide slide level1">
 <h1>MOM6 FLOP rates</h1>
-<p>Do FLOP rates for the model and various subroutines</p>
-<ul>
-<li>EOS_Wright: 10 GFLOP/s</li>
-<li>btstep: 0.4 GFLOP/s</li>
-</ul>
+<table>
+<thead>
+<tr class="header">
+<th>Subroutine</th>
+<th>%time</th>
+<th>GFLOP/s</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>btstep</td>
+<td>12.94</td>
+<td>0.89</td>
+</tr>
+<tr class="even">
+<td>horizontal_viscosity</td>
+<td>6.98</td>
+<td>2.30</td>
+</tr>
+<tr class="odd">
+<td>vertvisc_coef</td>
+<td>6.36</td>
+<td>1.29</td>
+</tr>
+<tr class="even">
+<td>coradcalc</td>
+<td>4.58</td>
+<td>2.68</td>
+</tr>
+<tr class="odd">
+<td>int_density_dz_wright</td>
+<td>4.14</td>
+<td>8.60</td>
+</tr>
+<tr class="even">
+<td>zonal_flux_adjust</td>
+<td>3.59</td>
+<td>3.44</td>
+</tr>
+<tr class="odd">
+<td>set_merid_bt_cont</td>
+<td>3.41</td>
+<td>3.17</td>
+</tr>
+<tr class="even">
+<td>find_coupling_coef</td>
+<td>3.40</td>
+<td>2.50</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="with-modules..." class="slide level2">
+<h2>With modules...</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Module</th>
+<th>Subroutine</th>
+<th>%time</th>
+<th>GFLOP/s</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>MOM_barotropic</td>
+<td>btstep</td>
+<td>12.94</td>
+<td>0.89</td>
+</tr>
+<tr class="even">
+<td>MOM_hor_visc</td>
+<td>horizontal_viscosity</td>
+<td>6.98</td>
+<td>2.30</td>
+</tr>
+<tr class="odd">
+<td>MOM_vert_friction</td>
+<td>vertvisc_coef</td>
+<td>6.36</td>
+<td>1.29</td>
+</tr>
+<tr class="even">
+<td>MOM_Coriolisadv</td>
+<td>coradcalc</td>
+<td>4.58</td>
+<td>2.68</td>
+</tr>
+<tr class="odd">
+<td>MOM_EOS_Wright</td>
+<td>int_density_dz_wright</td>
+<td>4.14</td>
+<td>8.60</td>
+</tr>
+<tr class="even">
+<td>MOM_continuity_ppm</td>
+<td>zonal_flux_adjust</td>
+<td>3.59</td>
+<td>3.44</td>
+</tr>
+<tr class="odd">
+<td>MOM_continuity_ppm</td>
+<td>set_merid_bt_cont</td>
+<td>3.41</td>
+<td>3.17</td>
+</tr>
+<tr class="even">
+<td>MOM_vert_friction</td>
+<td>find_coupling_coef</td>
+<td>3.40</td>
+<td>2.50</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-rest" class="slide level2">
+<h2>The rest</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Module</th>
+<th>Subroutine</th>
+<th>%time</th>
+<th>GFLOP/s</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>MOM_continuity_ppm</td>
+<td>zonal_flux_layer</td>
+<td><blockquote>
+<p>3.29</p>
+</blockquote></td>
+<td><blockquote>
+<p>3.54</p>
+</blockquote></td>
+</tr>
+<tr class="even">
+<td>MOM_continuity_ppm</td>
+<td>meridional_flux_adjust</td>
+<td><blockquote>
+<p>3.28</p>
+</blockquote></td>
+<td><blockquote>
+<p>3.95</p>
+</blockquote></td>
+</tr>
+<tr class="odd">
+<td>MOM_continuity_ppm</td>
+<td>zonal_mass_flux</td>
+<td><blockquote>
+<p>3.09</p>
+</blockquote></td>
+<td><blockquote>
+<p>3.88</p>
+</blockquote></td>
+</tr>
+<tr class="even">
+<td>MOM_dynamics_split_rk2</td>
+<td>step_MOM_dyn_split_rk2</td>
+<td><blockquote>
+<p>3.09</p>
+</blockquote></td>
+<td><blockquote>
+<p>1.31</p>
+</blockquote></td>
+</tr>
+<tr class="odd">
+<td>MOM_vert_friction</td>
+<td>vertvisc_remnant</td>
+<td><blockquote>
+<p>2.86</p>
+</blockquote></td>
+<td><blockquote>
+<p>2.16</p>
+</blockquote></td>
+</tr>
+<tr class="even">
+<td>MOM_continuity_ppm</td>
+<td>ppm_limit_pos</td>
+<td><blockquote>
+<p>2.72</p>
+</blockquote></td>
+<td><blockquote>
+<p>1.59</p>
+</blockquote></td>
+</tr>
+<tr class="odd">
+<td>MOM_continuity_ppm</td>
+<td>meridional_mass_flux</td>
+<td><blockquote>
+<p>2.46</p>
+</blockquote></td>
+<td><blockquote>
+<p>4.16</p>
+</blockquote></td>
+</tr>
+<tr class="even">
+<td>mpp_domains_mod</td>
+<td>mpp_do_group_update_r8</td>
+<td><blockquote>
+<p>2.28</p>
+</blockquote></td>
+<td><blockquote>
+<p>0.00</p>
+</blockquote></td>
+</tr>
+<tr class="odd">
+<td>MOM_vert_friction</td>
+<td>vertvisc</td>
+<td><blockquote>
+<p>2.00</p>
+</blockquote></td>
+<td><blockquote>
+<p>2.06</p>
+</blockquote></td>
+</tr>
+<tr class="even">
+<td>MOM_thickness_diffuse</td>
+<td>thickness_diffuse_full</td>
+<td><blockquote>
+<p>1.92</p>
+</blockquote></td>
+<td><blockquote>
+<p>3.78</p>
+</blockquote></td>
+</tr>
+<tr class="odd">
+<td>&lt;runtime&gt;</td>
+<td>memset_avx2_unaligned_erms</td>
+<td><blockquote>
+<p>1.61</p>
+</blockquote></td>
+<td><blockquote>
+<p>0.16</p>
+</blockquote></td>
+</tr>
+<tr class="even">
+<td>MOM_barotropic</td>
+<td>btcalc</td>
+<td><blockquote>
+<p>1.45</p>
+</blockquote></td>
+<td><blockquote>
+<p>0.50</p>
+</blockquote></td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section id="horizontal-viscosity" class="title-slide slide level1">
+<h1>Horizontal Viscosity</h1>
+<pre class=" numberLines" data-code="" data-start-line="831
+
+" data-end-line="958
+
+" data-line-numbers="1|2-6|7-13|14-18|20-73|127
+
+" data-startFrom="831
+
+"><code>    do j=Jsq,Jeq+1 ; do i=Isq,Ieq+1
+      if ((CS%Smagorinsky_Kh) .or. (CS%Smagorinsky_Ah)) then
+        Shear_mag = sqrt(sh_xx(i,j)*sh_xx(i,j) + &amp;
+          0.25*((sh_xy(I-1,J-1)*sh_xy(I-1,J-1) + sh_xy(I,J)*sh_xy(I,J)) + &amp;
+                (sh_xy(I-1,J)*sh_xy(I-1,J) + sh_xy(I,J-1)*sh_xy(I,J-1))))
+      endif
+      if ((CS%Leith_Kh) .or. (CS%Leith_Ah)) then
+        if (CS%use_QG_Leith_visc) then
+          vert_vort_mag = MIN(grad_vort_mag_h(i,j) + grad_div_mag_h(i,j),3.*grad_vort_mag_h_2d(i,j))
+        else
+          vert_vort_mag = (grad_vort_mag_h(i,j) + grad_div_mag_h(i,j))
+        endif
+      endif
+      if (CS%better_bound_Ah .or. CS%better_bound_Kh) then
+        hrat_min = min(1.0, min(h_u(I,j), h_u(I-1,j), h_v(i,J), h_v(i,J-1)) / &amp;
+                            (h(i,j,k) + h_neglect) )
+        visc_bound_rem = 1.0
+      endif
+
+      if (CS%Laplacian) then
+        ! Determine the Laplacian viscosity at h points, using the
+        ! largest value from several parameterizations.
+        Kh = CS%Kh_bg_xx(i,j) ! Static (pre-computed) background viscosity
+        if (CS%add_LES_viscosity) then
+          if (CS%Smagorinsky_Kh) Kh = Kh + CS%Laplac2_const_xx(i,j) * Shear_mag
+          if (CS%Leith_Kh) Kh = Kh + CS%Laplac3_const_xx(i,j) * vert_vort_mag*inv_PI3
+        else
+          if (CS%Smagorinsky_Kh) Kh = max( Kh, CS%Laplac2_const_xx(i,j) * Shear_mag )
+          if (CS%Leith_Kh) Kh = max( Kh, CS%Laplac3_const_xx(i,j) * vert_vort_mag*inv_PI3)
+        endif
+        ! All viscosity contributions above are subject to resolution scaling
+        if (rescale_Kh) Kh = VarMix%Res_fn_h(i,j) * Kh
+        if (CS%res_scale_MEKE) meke_res_fn = VarMix%Res_fn_h(i,j)
+        ! Older method of bounding for stability
+        if (legacy_bound) Kh = min(Kh, CS%Kh_Max_xx(i,j))
+        Kh = max( Kh, CS%Kh_bg_min ) ! Place a floor on the viscosity, if desired.
+        if (use_MEKE_Ku) &amp;
+          Kh = Kh + MEKE%Ku(i,j) * meke_res_fn ! *Add* the MEKE contribution (might be negative)
+        if (CS%anisotropic) Kh = Kh + CS%Kh_aniso * ( 1. - CS%n1n2_h(i,j)**2 ) ! *Add* the tension component
+                                                                               ! of anisotropic viscosity
+
+        ! Newer method of bounding for stability
+        if (CS%better_bound_Kh) then
+          if (Kh &gt;= hrat_min*CS%Kh_Max_xx(i,j)) then
+            visc_bound_rem = 0.0
+            Kh = hrat_min*CS%Kh_Max_xx(i,j)
+          else
+            visc_bound_rem = 1.0 - Kh / (hrat_min*CS%Kh_Max_xx(i,j))
+          endif
+        endif
+
+        if ((CS%id_Kh_h&gt;0) .or. find_FrictWork .or. CS%debug) Kh_h(i,j,k) = Kh
+
+        if (CS%id_grid_Re_Kh&gt;0) then
+          KE = 0.125*((u(I,j,k)+u(I-1,j,k))**2 + (v(i,J,k)+v(i,J-1,k))**2)
+          grid_Re_Kh(i,j,k) = (sqrt(KE) * sqrt(CS%grid_sp_h2(i,j))) &amp;
+              / max(Kh, CS%min_grid_Kh)
+        endif
+
+        if (CS%id_div_xx_h&gt;0) div_xx_h(i,j,k) = div_xx(i,j)
+        if (CS%id_sh_xx_h&gt;0) sh_xx_h(i,j,k) = sh_xx(i,j)
+
+        str_xx(i,j) = -Kh * sh_xx(i,j)
+      else   ! not Laplacian
+        str_xx(i,j) = 0.0
+      endif ! Laplacian
+
+      if (CS%anisotropic) then
+        ! Shearing-strain averaged to h-points
+        local_strain = 0.25 * ( (sh_xy(I,J) + sh_xy(I-1,J-1)) + (sh_xy(I-1,J) + sh_xy(I,J-1)) )
+        ! *Add* the shear-strain contribution to the xx-component of stress
+        str_xx(i,j) = str_xx(i,j) - CS%Kh_aniso * CS%n1n2_h(i,j) * CS%n1n1_m_n2n2_h(i,j) * local_strain
+      endif
+
+      if (CS%biharmonic) then
+        ! Determine the biharmonic viscosity at h points, using the
+        ! largest value from several parameterizations.
+        AhSm = 0.0; AhLth = 0.0
+        if ((CS%Smagorinsky_Ah) .or. (CS%Leith_Ah)) then
+          if (CS%Smagorinsky_Ah) then
+            if (CS%bound_Coriolis) then
+              AhSm = Shear_mag * (CS%Biharm_const_xx(i,j) + &amp;
+                                  CS%Biharm_const2_xx(i,j)*Shear_mag)
+            else
+              AhSm = CS%Biharm_const_xx(i,j) * Shear_mag
+            endif
+          endif
+          if (CS%Leith_Ah) AhLth = CS%Biharm6_const_xx(i,j) * abs(Del2vort_h(i,j)) * inv_PI6
+          Ah = MAX(MAX(CS%Ah_bg_xx(i,j), AhSm), AhLth)
+          if (CS%bound_Ah .and. .not.CS%better_bound_Ah) &amp;
+            Ah = MIN(Ah, CS%Ah_Max_xx(i,j))
+        else
+          Ah = CS%Ah_bg_xx(i,j)
+        endif ! Smagorinsky_Ah or Leith_Ah
+
+        if (use_MEKE_Au) Ah = Ah + MEKE%Au(i,j) ! *Add* the MEKE contribution
+
+        if (CS%Re_Ah &gt; 0.0) then
+          KE = 0.125*((u(I,j,k)+u(I-1,j,k))**2 + (v(i,J,k)+v(i,J-1,k))**2)
+          Ah = sqrt(KE) * CS%Re_Ah_const_xx(i,j)
+        endif
+
+        if (CS%better_bound_Ah) then
+          Ah = MIN(Ah, visc_bound_rem*hrat_min*CS%Ah_Max_xx(i,j))
+        endif
+
+        if ((CS%id_Ah_h&gt;0) .or. find_FrictWork .or. CS%debug) Ah_h(i,j,k) = Ah
+
+        if (CS%id_grid_Re_Ah&gt;0) then
+          KE = 0.125*((u(I,j,k)+u(I-1,j,k))**2 + (v(i,J,k)+v(i,J-1,k))**2)
+          grid_Re_Ah(i,j,k) = (sqrt(KE) * CS%grid_sp_h3(i,j)) &amp;
+              / max(Ah, CS%min_grid_Ah)
+        endif
+
+        str_xx(i,j) = str_xx(i,j) + Ah * &amp;
+          (CS%DY_dxT(i,j) * (G%IdyCu(I,j)*Del2u(I,j) - G%IdyCu(I-1,j)*Del2u(I-1,j)) - &amp;
+           CS%DX_dyT(i,j) * (G%IdxCv(i,J)*Del2v(i,J) - G%IdxCv(i,J-1)*Del2v(i,J-1)))
+
+        ! Keep a copy of the biharmonic contribution for backscatter parameterization
+        bhstr_xx(i,j) = Ah * &amp;
+          (CS%DY_dxT(i,j) * (G%IdyCu(I,j)*Del2u(I,j) - G%IdyCu(I-1,j)*Del2u(I-1,j)) - &amp;
+           CS%DX_dyT(i,j) * (G%IdxCv(i,J)*Del2v(i,J) - G%IdxCv(i,J-1)*Del2v(i,J-1)))
+        bhstr_xx(i,j) = bhstr_xx(i,j) * (h(i,j,k) * CS%reduction_xx(i,j))
+
+      endif  ! biharmonic
+
+    enddo ; enddo
+</code></pre>
 </section>
 
-<section id="example-1-mom_hor_visc" class="title-slide slide level1">
-<h1>Example 1: MOM_hor_visc</h1>
-<ul>
-<li>Large do-loops of many arrays</li>
-<li>Cost of if-blocks</li>
-<li>Stack limits?</li>
-</ul>
+<section id="non-vectorized-code" class="title-slide slide level1">
+<h1>Non-vectorized code</h1>
+<pre class="x86asm"><code>│      │833    Shear_mag = sqrt(sh_xx(i,j)*sh_xx(i,j) + &amp;
+│ 0.70 │         vaddsd   %xmm13,%xmm12,%xmm14
+│ 1.62 │         vsqrtsd  %xmm14,%xmm14,%xmm14
+│ 6.53 │         vmovsd   %xmm14,-0x8e8(%rbp)</code></pre>
+<table>
+<tbody>
+<tr class="odd">
+<td><code>vaddsd</code></td>
+<td>Serial add</td>
+</tr>
+<tr class="even">
+<td><code>vaddpd</code></td>
+<td>Parallel add</td>
+</tr>
+</tbody>
+</table>
+</section>
+
+<section id="excessive-stack" class="title-slide slide level1">
+<h1>Excessive Stack</h1>
+<pre class="x86asm"><code>│      │919    Ah = MAX(MAX(CS%Ah_bg_xx(i,j), AhSm), AhLth)
+│      │         lea      (%rax,%rdx,8),%rdi
+│      │         lea      (%rdi,%rsi,1),%r8
+│ 0.39 │         vmovsd   (%r8,%r9,8),%xmm0
+│ 0.01 │         vmaxsd   -0x13f8(%rbp),%xmm0,%xmm0
+│ 2.34 │         vmaxsd   -0x13f0(%rbp),%xmm0,%xmm0
+│ 0.42 │         vmovsd   %xmm0,-0x1468(%rbp)</code></pre>
+<table>
+<tbody>
+<tr class="odd">
+<td>lea</td>
+<td>Compute mem address</td>
+</tr>
+<tr class="even">
+<td>vmovsd</td>
+<td>Serial move</td>
+</tr>
+<tr class="odd">
+<td>vmaxsd</td>
+<td>Serial max</td>
+</tr>
+</tbody>
+</table>
 </section>
 
 <section id="example-2-coradcalc" class="title-slide slide level1">
@@ -217,6 +707,14 @@
 <ul>
 <li>ijk -&gt; kij vectorization</li>
 <li>"override_limits"</li>
+</ul>
+</section>
+
+<section id="mystery-problems" class="title-slide slide level1">
+<h1>Mystery Problems</h1>
+<ul>
+<li>MOM_hor_visc and the stack</li>
+<li></li>
 </ul>
 </section>
 
