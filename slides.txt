@@ -1,9 +1,9 @@
-===========================
-A Tale of Two Architectures
-===========================
+=========================
+The Vectorization of MOM6
+=========================
 
 :author: Marshall Ward
-:description: Overview of MOM6 programming rules for improved performance.
+:description: Overview of recent efforts to vectorize MOM6
 :date: 2021-04-21
 :url: https://marshallward.org/ogrp2021.html
 :preface:
@@ -48,7 +48,7 @@ CPU Scaling
 
 .. image:: img/scaling_ocn.svg
 
-Resilient, but CFL-bound
+MOM5 scaling in ACCESS-OM2
 
 
 Fluid Dynamics Scaling
@@ -105,7 +105,6 @@ Clock Speed vs # of Cores
 Using more cores further reduces clock speed!
 
 
-
 Vectorization
 =============
 
@@ -157,20 +156,18 @@ Intel normalization
 Vector Instructions
 ===================
 
-Gaea C4 (Xeon E5-2697 v4, "Broadwell")
+.. image:: img/avx.svg
 
-:math:`x_1 \leftarrow x_2 + x_3`
+======   ==========  =======  ===========
+Instr.   Size        GFLOP/s  Obs. (Gaea)
+======   ==========  =======  ===========
+SSE      4 SP/2 DP   14.4     14.394
+AVX      8 SP/4 DP   28.8     28.790
+======   ==========  =======  ===========
 
-======   ==========  =======  ======
-Instr.   Size        GFLOP/s  Obs.
-======   ==========  =======  ======
-MMX      2 SP        7.2      -
-SSE      4 SP/2 DP   14.4     14.395
-AVX      8 SP/4 DP   28.8     28.792
-AVX512   16 SP/8 DP  57.6     -
-======   ==========  =======  ======
+.. Gaea C4 (Xeon E5-2697 v4, "Broadwell")
 
-:math:`f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}`
+.. :math:`f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}`
 
 .. notes::
 
@@ -185,19 +182,70 @@ AVX512   16 SP/8 DP  57.6     -
 Fused-Multiply Add
 ==================
 
-TODO
+FMA: :math:`d \leftarrow a \times b + c`
+
+======   ==========  =======  =======
+Instr.   Op          GFLOP/s  Obs.
+======   ==========  =======  =======
+SSE      Add         14.4     14.394
+
+         FMA         28.8     28.790
+
+AVX      Add         28.8     28.788
+
+         FMA         57.6     57.580
+======   ==========  =======  =======
+
+:math:`\text{rd}(\text{rd}(a \times b) + c)`
+vs :math:`\text{rd}(a \times b + c)`
+
 
 
 Concurrency
 ===========
 
 .. image:: img/broadwell_exc.svg
+   :ref: https://en.wikichip.org/wiki/File:broadwell_block_diagram.svg
 
 2 instr. per cycle, even FMA
 
+
+Peak
+====
+
+
+======   ==========  =======  =======
+Instr.   Op          GFLOP/s  Obs.
+======   ==========  =======  =======
+SSE      Add         14.4     14.394
+
+         FMA         28.8     28.790
+
+         2x FMA      57.6     57.580
+
+AVX      Add         28.8     28.788
+
+         Add+Mul     57.6     57.580
+
+         FMA         57.6     57.580
+
+         2x FMA      115.2    115.160
+======   ==========  =======  =======
+
+.. notes::
+
+   sse_add GFLOP/s: 14.394 (14.394 / thread)
+   sse_fma GFLOP/s: 28.790 (28.790 / thread)
+   sse_fmac GFLOP/s: 57.580 (57.580 / thread)
+   avx_add GFLOP/s: 28.788 (28.788 / thread)
+   avx_mac GFLOP/s: 57.580 (57.580 / thread)
+   avx_fma GFLOP/s: 57.580 (57.580 / thread)
+   avx_fmac GFLOP/s: 115.160 (115.160 / thread)
+
+
  
-Single core performance
-=======================
+Array Ops
+=========
 
 .. image:: img/gaea_flops.svg
 
@@ -205,7 +253,17 @@ Single core performance
 Arithmetic Intensity
 ====================
 
-FLOP rate
+======================  ====     =======
+Expression              AI       GFLOP/s
+======================  ====     =======
+y[:] = a x[:]           1/4      26.43
+y[:] = x[:] + x[:]      1/4      24.98
+y[:] = x[:] + y[:]      1/8      18.34
+y[:] = a x[:] + y[:]    1/4      37.58
+y[:] = a x[:] + b y[:]  3/8      51.08
+y[:] = x[1:] - x[:-1]   1/8      14.07
+y[:] = x[8:] - x[:-8]   1/8      18.39
+======================  ====     =======
 
 
 MOM6 sample config
@@ -214,10 +272,18 @@ MOM6 sample config
 Describe the "benchmark"
 
 
-Profiling with ``perf``
-=======================
+Profiling with perf
+===================
 
-Quick sample overview
+.. image:: img/perf_symbols.png
+   :width: 80%
+
+
+Profiling with perf
+===================
+
+.. image:: img/perf_lines.png
+   :width: 80%
 
 
 MOM6 FLOP rates
@@ -279,7 +345,7 @@ MOM_barotropic          btcalc                      1.45    0.50
 
 
 Horizontal Viscosity
-==========================
+====================
 
 .. include:: src/MOM_hor_visc.F90
    :code:
@@ -311,13 +377,13 @@ Excessive Stack
 
 .. code:: x86asm
 
-  │      │919    Ah = MAX(MAX(CS%Ah_bg_xx(i,j), AhSm), AhLth)
-  │      │         lea      (%rax,%rdx,8),%rdi
-  │      │         lea      (%rdi,%rsi,1),%r8
-  │ 0.39 │         vmovsd   (%r8,%r9,8),%xmm0
-  │ 0.01 │         vmaxsd   -0x13f8(%rbp),%xmm0,%xmm0
-  │ 2.34 │         vmaxsd   -0x13f0(%rbp),%xmm0,%xmm0
-  │ 0.42 │         vmovsd   %xmm0,-0x1468(%rbp)
+   │      │919    Ah = MAX(MAX(CS%Ah_bg_xx(i,j), AhSm), AhLth)
+   │      │         lea      (%rax,%rdx,8),%rdi
+   │      │         lea      (%rdi,%rsi,1),%r8
+   │ 0.39 │         vmovsd   (%r8,%r9,8),%xmm0
+   │ 0.01 │         vmaxsd   -0x13f8(%rbp),%xmm0,%xmm0
+   │ 2.34 │         vmaxsd   -0x13f0(%rbp),%xmm0,%xmm0
+   │ 0.42 │         vmovsd   %xmm0,-0x1468(%rbp)
 
 ======   ===================
 lea      Compute mem address

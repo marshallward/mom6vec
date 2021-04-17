@@ -1,0 +1,45 @@
+digraph avx {
+    rankdir = LR
+    bgcolor = transparent
+
+    node [
+        shape = record
+        style = filled
+        fillcolor = white
+        fontname = helvetica
+    ]
+
+    areg [
+        label="<a0> a0 | <a1> a1 | <a2> a2 | <a3> a3",
+    ]
+
+    breg [
+        label="<b0> b0 | <b1> b1 | <b2> b2 | <b3> b3",
+    ]
+
+    creg [
+        label="<c0> c0 | <c1> c1 | <c2> c2 | <c3> c3",
+    ]
+
+    edge [
+        color = white
+        fontcolor = white
+        label = "+"
+    ]
+ 
+    areg:a0 -> breg:b0
+    areg:a1 -> breg:b1
+    areg:a2 -> breg:b2
+    areg:a3 -> breg:b3
+
+    edge [
+        color = white
+        fontcolor = white
+        label = "="
+    ]
+ 
+    breg:b0 -> creg:c0
+    breg:b1 -> creg:c1
+    breg:b2 -> creg:c2
+    breg:b3 -> creg:c3
+}
