@@ -1,0 +1,12 @@
+Performance counter stats for '../../build/intel/MOM6':
+
+    22397.33 msec task-clock:u              # 0.986 CPUs utilized
+ 84092282119      cycles:u                  # 3.755 GHz
+ 45781959071      stalled-cycles-backend:u  # 54.44% idle cycles
+ 11481435369      l2_cycles_waiting_on_fills:u #  512.625 M/sec
+ 59207044954      fp_ret_sse_avx_ops.all:u  # 2643.487 M/sec
+
+ 22.709657811 seconds time elapsed
+
+ 22.232343000 seconds user
+  0.116333000 seconds sys

@@ -47,7 +47,6 @@
     </header>
 
     <footer style="font-size: 1pc; position: absolute; bottom: 2%; left: 2%;">
-      <!-- code>https://marshallward.org/mom6vv</code> -->
       <code><p><a href="https://marshallward.org/ogrp2021.html">https://marshallward.org/ogrp2021.html</a></p></code>
     </footer>
 
@@ -200,9 +199,6 @@
 </tr>
 </tbody>
 </table>
-<aside class="notes">
-<p>sse_add GFLOP/s: 14.395 (14.395 / thread) sse_fma GFLOP/s: 28.792 (28.792 / thread) sse_fmac GFLOP/s: 57.576 (57.576 / thread) avx_add GFLOP/s: 28.790 (28.790 / thread) avx_mac GFLOP/s: 57.576 (57.576 / thread) avx_fma GFLOP/s: 57.583 (57.583 / thread)</p>
-</aside>
 </section>
 
 <section id="fused-multiply-add" class="title-slide slide level1">
@@ -288,14 +284,16 @@
 </tr>
 </tbody>
 </table>
-<aside class="notes">
-<p>sse_add GFLOP/s: 14.394 (14.394 / thread) sse_fma GFLOP/s: 28.790 (28.790 / thread) sse_fmac GFLOP/s: 57.580 (57.580 / thread) avx_add GFLOP/s: 28.788 (28.788 / thread) avx_mac GFLOP/s: 57.580 (57.580 / thread) avx_fma GFLOP/s: 57.580 (57.580 / thread) avx_fmac GFLOP/s: 115.160 (115.160 / thread)</p>
-</aside>
 </section>
 
 <section id="array-ops" class="title-slide slide level1">
 <h1>Array Ops</h1>
 <p><img data-src="img/gaea_flops.svg" alt="image" /></p>
+</section>
+
+<section id="array-ops-1" class="title-slide slide level1">
+<h1>Array Ops</h1>
+<p><img data-src="img/gaea_flops_cached.svg" alt="image" /></p>
 </section>
 
 <section id="arithmetic-intensity" class="title-slide slide level1">
@@ -305,43 +303,43 @@
 <tr class="header">
 <th>Expression</th>
 <th>AI</th>
-<th>GFLOP/s</th>
+<th>Max GFLOP/s</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>y[:] = a x[:]</td>
-<td>1/4</td>
+<td><span class="math inline">\(\frac{1}{4}\)</span></td>
 <td>26.43</td>
 </tr>
 <tr class="even">
 <td>y[:] = x[:] + x[:]</td>
-<td>1/4</td>
+<td><span class="math inline">\(\frac{1}{4}\)</span></td>
 <td>24.98</td>
 </tr>
 <tr class="odd">
 <td>y[:] = x[:] + y[:]</td>
-<td>1/8</td>
+<td><span class="math inline">\(\frac{1}{8}\)</span></td>
 <td>18.34</td>
 </tr>
 <tr class="even">
 <td>y[:] = a x[:] + y[:]</td>
-<td>1/4</td>
+<td><span class="math inline">\(\frac{1}{4}\)</span></td>
 <td>37.58</td>
 </tr>
 <tr class="odd">
 <td>y[:] = a x[:] + b y[:]</td>
-<td>3/8</td>
+<td><span class="math inline">\(\frac{3}{8}\)</span></td>
 <td>51.08</td>
 </tr>
 <tr class="even">
 <td>y[:] = x[1:] - x[:-1]</td>
-<td>1/8</td>
+<td><span class="math inline">\(\frac{1}{8}\)</span></td>
 <td>14.07</td>
 </tr>
 <tr class="odd">
 <td>y[:] = x[8:] - x[:-8]</td>
-<td>1/8</td>
+<td><span class="math inline">\(\frac{1}{8}\)</span></td>
 <td>18.39</td>
 </tr>
 </tbody>
@@ -350,7 +348,22 @@
 
 <section id="mom6-sample-config" class="title-slide slide level1">
 <h1>MOM6 sample config</h1>
-<p>Describe the "benchmark"</p>
+<p><img data-src="img/benchmark_topo.svg" class="float float" style="width:35.0%" alt="image" /></p>
+<ul>
+<li><p><span class="math inline">\(32 \times 32\)</span> grid, 75 level</p>
+<ul>
+<li class="fragment">~76k / field</li>
+</ul></li>
+<li><p>288 steps (3 day, <span class="math inline">\(\Delta t = 900s\)</span>)</p></li>
+<li><p>"Benchmark" configuration:</p>
+<ul>
+<li class="fragment">Split barotropic</li>
+<li class="fragment">Biharmonic visc</li>
+<li class="fragment">Thickness diffusivity</li>
+<li class="fragment">Bounded Coriolis</li>
+<li class="fragment">??</li>
+</ul></li>
+</ul>
 </section>
 
 <section id="profiling-with-perf" class="title-slide slide level1">
@@ -361,6 +374,23 @@
 <section id="profiling-with-perf-1" class="title-slide slide level1">
 <h1>Profiling with perf</h1>
 <p><img data-src="img/perf_lines.png" style="width:80.0%" alt="image" /></p>
+</section>
+
+<section id="perf-stat" class="title-slide slide level1">
+<h1>perf stat</h1>
+<pre class="" data-code=""><code>Performance counter stats for &#39;../../build/intel/MOM6&#39;:
+
+    22397.33 msec task-clock:u              # 0.986 CPUs utilized
+ 84092282119      cycles:u                  # 3.755 GHz
+ 45781959071      stalled-cycles-backend:u  # 54.44% idle cycles
+ 11481435369      l2_cycles_waiting_on_fills:u #  512.625 M/sec
+ 59207044954      fp_ret_sse_avx_ops.all:u  # 2643.487 M/sec
+
+ 22.709657811 seconds time elapsed
+
+ 22.232343000 seconds user
+  0.116333000 seconds sys
+</code></pre>
 </section>
 
 <section>
@@ -765,12 +795,12 @@
 <table>
 <tbody>
 <tr class="odd">
-<td><code>vaddsd</code></td>
-<td>Serial add</td>
+<td><code>v___sd</code></td>
+<td>Serial</td>
 </tr>
 <tr class="even">
-<td><code>vaddpd</code></td>
-<td>Parallel add</td>
+<td><code>v___pd</code></td>
+<td>Parallel</td>
 </tr>
 </tbody>
 </table>
@@ -803,11 +833,381 @@
 </table>
 </section>
 
-<section id="example-2-coradcalc" class="title-slide slide level1">
-<h1>Example 2: CoradCalc</h1>
-<ul>
-<li>Gather disparate memory accesses</li>
-</ul>
+<section id="hor-visc-speedup" class="title-slide slide level1">
+<h1>Hor Visc Speedup</h1>
+<table>
+<thead>
+<tr class="header">
+<th>Platform</th>
+<th>Old</th>
+<th>New</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><p>Gaea C4</p></td>
+<td><p>2.23s</p>
+<p>(1.67)</p></td>
+<td><p>1.27s</p>
+<p>(2.93)</p></td>
+<td><p>1.75x</p></td>
+</tr>
+<tr class="even">
+<td><p>Ryzen 5 2600</p></td>
+<td><p>1.69s</p>
+<p>(2.30)</p></td>
+<td><p>1.01s</p>
+<p>(3.76)</p></td>
+<td><p>1.67x</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+<section id="coriolis-advection" class="title-slide slide level1">
+<h1>Coriolis advection</h1>
+<pre class=" numberLines" data-code="" data-start-line="424
+
+" data-end-line="686
+
+" data-line-numbers="1|17-32|245-257
+
+" data-startFrom="424
+
+"><code>    do J=Jsq-1,Jeq+1 ; do I=Isq-1,Ieq+1
+      if (CS%no_slip ) then
+        relative_vorticity = (2.0-G%mask2dBu(I,J)) * (dvdx(I,J) - dudy(I,J)) * G%IareaBu(I,J)
+      else
+        relative_vorticity = G%mask2dBu(I,J) * (dvdx(I,J) - dudy(I,J)) * G%IareaBu(I,J)
+      endif
+      absolute_vorticity = G%CoriolisBu(I,J) + relative_vorticity
+      Ih = 0.0
+      if (Area_q(i,j) &gt; 0.0) then
+        hArea_q = (hArea_u(I,j) + hArea_u(I,j+1)) + (hArea_v(i,J) + hArea_v(i+1,J))
+        Ih = Area_q(i,j) / (hArea_q + h_neglect*Area_q(i,j))
+      endif
+      q(I,J) = absolute_vorticity * Ih
+      abs_vort(I,J) = absolute_vorticity
+      Ih_q(I,J) = Ih
+
+      if (CS%bound_Coriolis) then
+        fv1 = absolute_vorticity * v(i+1,J,k)
+        fv2 = absolute_vorticity * v(i,J,k)
+        fu1 = -absolute_vorticity * u(I,j+1,k)
+        fu2 = -absolute_vorticity * u(I,j,k)
+        if (fv1 &gt; fv2) then
+          max_fvq(I,J) = fv1 ; min_fvq(I,J) = fv2
+        else
+          max_fvq(I,J) = fv2 ; min_fvq(I,J) = fv1
+        endif
+        if (fu1 &gt; fu2) then
+          max_fuq(I,J) = fu1 ; min_fuq(I,J) = fu2
+        else
+          max_fuq(I,J) = fu2 ; min_fuq(I,J) = fu1
+        endif
+      endif
+
+      if (CS%id_rv &gt; 0) RV(I,J,k) = relative_vorticity
+      if (CS%id_PV &gt; 0) PV(I,J,k) = q(I,J)
+      if (associated(AD%rv_x_v) .or. associated(AD%rv_x_u)) &amp;
+        q2(I,J) = relative_vorticity * Ih
+    enddo ; enddo
+
+    !   a, b, c, and d are combinations of neighboring potential
+    ! vorticities which form the Arakawa and Hsu vorticity advection
+    ! scheme.  All are defined at u grid points.
+
+    if (CS%Coriolis_Scheme == ARAKAWA_HSU90) then
+      do j=Jsq,Jeq+1
+        do I=is-1,Ieq
+          a(I,j) = (q(I,J) + (q(I+1,J) + q(I,J-1))) * C1_12
+          d(I,j) = ((q(I,J) + q(I+1,J-1)) + q(I,J-1)) * C1_12
+        enddo
+        do I=Isq,Ieq
+          b(I,j) = (q(I,J) + (q(I-1,J) + q(I,J-1))) * C1_12
+          c(I,j) = ((q(I,J) + q(I-1,J-1)) + q(I,J-1)) * C1_12
+        enddo
+      enddo
+    elseif (CS%Coriolis_Scheme == ARAKAWA_LAMB81) then
+      do j=Jsq,Jeq+1 ; do I=Isq,Ieq+1
+        a(I-1,j) = (2.0*(q(I,J) + q(I-1,J-1)) + (q(I-1,J) + q(I,J-1))) * C1_24
+        d(I-1,j) = ((q(I,j) + q(I-1,J-1)) + 2.0*(q(I-1,J) + q(I,J-1))) * C1_24
+        b(I,j) =   ((q(I,J) + q(I-1,J-1)) + 2.0*(q(I-1,J) + q(I,J-1))) * C1_24
+        c(I,j) =   (2.0*(q(I,J) + q(I-1,J-1)) + (q(I-1,J) + q(I,J-1))) * C1_24
+        ep_u(i,j) = ((q(I,J) - q(I-1,J-1)) + (q(I-1,J) - q(I,J-1))) * C1_24
+        ep_v(i,j) = (-(q(I,J) - q(I-1,J-1)) + (q(I-1,J) - q(I,J-1))) * C1_24
+      enddo ; enddo
+    elseif (CS%Coriolis_Scheme == AL_BLEND) then
+      Fe_m2 = CS%F_eff_max_blend - 2.0
+      rat_lin = 1.5 * Fe_m2 / max(CS%wt_lin_blend, 1.0e-16)
+
+      ! This allows the code to always give Sadourny Energy
+      if (CS%F_eff_max_blend &lt;= 2.0) then ; Fe_m2 = -1. ; rat_lin = -1.0 ; endif
+
+      do j=Jsq,Jeq+1 ; do I=Isq,Ieq+1
+        min_Ihq = MIN(Ih_q(I-1,J-1), Ih_q(I,J-1), Ih_q(I-1,J), Ih_q(I,J))
+        max_Ihq = MAX(Ih_q(I-1,J-1), Ih_q(I,J-1), Ih_q(I-1,J), Ih_q(I,J))
+        rat_m1 = 1.0e15
+        if (max_Ihq &lt; 1.0e15*min_Ihq) rat_m1 = max_Ihq / min_Ihq - 1.0
+        ! The weights used here are designed to keep the effective Coriolis
+        ! acceleration from any one point on its neighbors within a factor
+        ! of F_eff_max.  The minimum permitted value is 2 (the factor for
+        ! Sadourny&#39;s energy conserving scheme).
+
+        ! Determine the relative weights of Arakawa &amp; Lamb vs. Arakawa and Hsu.
+        if (rat_m1 &lt;= Fe_m2) then ; AL_wt = 1.0
+        elseif (rat_m1 &lt; 1.5*Fe_m2) then ; AL_wt = 3.0*Fe_m2 / rat_m1 - 2.0
+        else ; AL_wt = 0.0 ; endif
+
+        ! Determine the relative weights of Sadourny Energy vs. the other two.
+        if (rat_m1 &lt;= 1.5*Fe_m2) then ; Sad_wt = 0.0
+        elseif (rat_m1 &lt;= rat_lin) then
+          Sad_wt = 1.0 - (1.5*Fe_m2) / rat_m1
+        elseif (rat_m1 &lt; 2.0*rat_lin) then
+          Sad_wt = 1.0 - (CS%wt_lin_blend / rat_lin) * (rat_m1 - 2.0*rat_lin)
+        else ; Sad_wt = 1.0 ; endif
+
+        a(I-1,j) = Sad_wt * 0.25 * q(I-1,J) + (1.0 - Sad_wt) * &amp;
+                   ( ((2.0-AL_wt)* q(I-1,J) + AL_wt*q(I,J-1)) + &amp;
+                      2.0 * (q(I,J) + q(I-1,J-1)) ) * C1_24
+        d(I-1,j) = Sad_wt * 0.25 * q(I-1,J-1) + (1.0 - Sad_wt) * &amp;
+                   ( ((2.0-AL_wt)* q(I-1,J-1) + AL_wt*q(I,J)) + &amp;
+                      2.0 * (q(I-1,J) + q(I,J-1)) ) * C1_24
+        b(I,j) =   Sad_wt * 0.25 * q(I,J) + (1.0 - Sad_wt) * &amp;
+                   ( ((2.0-AL_wt)* q(I,J) + AL_wt*q(I-1,J-1)) + &amp;
+                      2.0 * (q(I-1,J) + q(I,J-1)) ) * C1_24
+        c(I,j) =   Sad_wt * 0.25 * q(I,J-1) + (1.0 - Sad_wt) * &amp;
+                   ( ((2.0-AL_wt)* q(I,J-1) + AL_wt*q(I-1,J)) + &amp;
+                      2.0 * (q(I,J) + q(I-1,J-1)) ) * C1_24
+        ep_u(i,j) = AL_wt  * ((q(I,J) - q(I-1,J-1)) + (q(I-1,J) - q(I,J-1))) * C1_24
+        ep_v(i,j) = AL_wt * (-(q(I,J) - q(I-1,J-1)) + (q(I-1,J) - q(I,J-1))) * C1_24
+      enddo ; enddo
+    endif
+
+    if (CS%Coriolis_En_Dis) then
+    !  c1 = 1.0-1.5*RANGE ; c2 = 1.0-RANGE ; c3 = 2.0 ; slope = 0.5
+      c1 = 1.0-1.5*0.5 ; c2 = 1.0-0.5 ; c3 = 2.0 ; slope = 0.5
+
+      do j=Jsq,Jeq+1 ; do I=is-1,ie
+        uhc = uh_center(I,j)
+        uhm = uh(I,j,k)
+        ! This sometimes matters with some types of open boundary conditions.
+        if (G%dy_Cu(I,j) == 0.0) uhc = uhm
+
+        if (abs(uhc) &lt; 0.1*abs(uhm)) then
+          uhm = 10.0*uhc
+        elseif (abs(uhc) &gt; c1*abs(uhm)) then
+          if (abs(uhc) &lt; c2*abs(uhm)) then ; uhc = (3.0*uhc+(1.0-c2*3.0)*uhm)
+          elseif (abs(uhc) &lt;= c3*abs(uhm)) then ; uhc = uhm
+          else ; uhc = slope*uhc+(1.0-c3*slope)*uhm
+          endif
+        endif
+
+        if (uhc &gt; uhm) then
+          uh_min(I,j) = uhm ; uh_max(I,j) = uhc
+        else
+          uh_max(I,j) = uhm ; uh_min(I,j) = uhc
+        endif
+      enddo ; enddo
+      do J=js-1,je ; do i=Isq,Ieq+1
+        vhc = vh_center(i,J)
+        vhm = vh(i,J,k)
+        ! This sometimes matters with some types of open boundary conditions.
+        if (G%dx_Cv(i,J) == 0.0) vhc = vhm
+
+        if (abs(vhc) &lt; 0.1*abs(vhm)) then
+          vhm = 10.0*vhc
+        elseif (abs(vhc) &gt; c1*abs(vhm)) then
+          if (abs(vhc) &lt; c2*abs(vhm)) then ; vhc = (3.0*vhc+(1.0-c2*3.0)*vhm)
+          elseif (abs(vhc) &lt;= c3*abs(vhm)) then ; vhc = vhm
+          else ; vhc = slope*vhc+(1.0-c3*slope)*vhm
+          endif
+        endif
+
+        if (vhc &gt; vhm) then
+          vh_min(i,J) = vhm ; vh_max(i,J) = vhc
+        else
+          vh_max(i,J) = vhm ; vh_min(i,J) = vhc
+        endif
+      enddo ; enddo
+    endif
+
+    ! Calculate KE and the gradient of KE
+    call gradKE(u, v, h, KE, KEx, KEy, k, OBC, G, GV, US, CS)
+
+    ! Calculate the tendencies of zonal velocity due to the Coriolis
+    ! force and momentum advection.  On a Cartesian grid, this is
+    !     CAu =  q * vh - d(KE)/dx.
+    if (CS%Coriolis_Scheme == SADOURNY75_ENERGY) then
+      if (CS%Coriolis_En_Dis) then
+        ! Energy dissipating biased scheme, Hallberg 200x
+        do j=js,je ; do I=Isq,Ieq
+          if (q(I,J)*u(I,j,k) == 0.0) then
+            temp1 = q(I,J) * ( (vh_max(i,j)+vh_max(i+1,j)) &amp;
+                             + (vh_min(i,j)+vh_min(i+1,j)) )*0.5
+          elseif (q(I,J)*u(I,j,k) &lt; 0.0) then
+            temp1 = q(I,J) * (vh_max(i,j)+vh_max(i+1,j))
+          else
+            temp1 = q(I,J) * (vh_min(i,j)+vh_min(i+1,j))
+          endif
+          if (q(I,J-1)*u(I,j,k) == 0.0) then
+            temp2 = q(I,J-1) * ( (vh_max(i,j-1)+vh_max(i+1,j-1)) &amp;
+                               + (vh_min(i,j-1)+vh_min(i+1,j-1)) )*0.5
+          elseif (q(I,J-1)*u(I,j,k) &lt; 0.0) then
+            temp2 = q(I,J-1) * (vh_max(i,j-1)+vh_max(i+1,j-1))
+          else
+            temp2 = q(I,J-1) * (vh_min(i,j-1)+vh_min(i+1,j-1))
+          endif
+          CAu(I,j,k) = 0.25 * G%IdxCu(I,j) * (temp1 + temp2)
+        enddo ; enddo
+      else
+        ! Energy conserving scheme, Sadourny 1975
+        do j=js,je ; do I=Isq,Ieq
+          CAu(I,j,k) = 0.25 * &amp;
+            (q(I,J) * (vh(i+1,J,k) + vh(i,J,k)) + &amp;
+             q(I,J-1) * (vh(i,J-1,k) + vh(i+1,J-1,k))) * G%IdxCu(I,j)
+        enddo ; enddo
+      endif
+    elseif (CS%Coriolis_Scheme == SADOURNY75_ENSTRO) then
+      do j=js,je ; do I=Isq,Ieq
+        CAu(I,j,k) = 0.125 * (G%IdxCu(I,j) * (q(I,J) + q(I,J-1))) * &amp;
+                     ((vh(i+1,J,k) + vh(i,J,k)) + (vh(i,J-1,k) + vh(i+1,J-1,k)))
+      enddo ; enddo
+    elseif ((CS%Coriolis_Scheme == ARAKAWA_HSU90) .or. &amp;
+            (CS%Coriolis_Scheme == ARAKAWA_LAMB81) .or. &amp;
+            (CS%Coriolis_Scheme == AL_BLEND)) then
+      ! (Global) Energy and (Local) Enstrophy conserving, Arakawa &amp; Hsu 1990
+      do j=js,je ; do I=Isq,Ieq
+        CAu(I,j,k) = ((a(I,j) * vh(i+1,J,k) +  c(I,j) * vh(i,J-1,k))  + &amp;
+                      (b(I,j) * vh(i,J,k) +  d(I,j) * vh(i+1,J-1,k))) * G%IdxCu(I,j)
+      enddo ; enddo
+    elseif (CS%Coriolis_Scheme == ROBUST_ENSTRO) then
+      ! An enstrophy conserving scheme robust to vanishing layers
+      ! Note: Heffs are in lieu of h_at_v that should be returned by the
+      !       continuity solver. AJA
+      do j=js,je ; do I=Isq,Ieq
+        Heff1 = abs(vh(i,J,k) * G%IdxCv(i,J)) / (eps_vel+abs(v(i,J,k)))
+        Heff1 = max(Heff1, min(h(i,j,k),h(i,j+1,k)))
+        Heff1 = min(Heff1, max(h(i,j,k),h(i,j+1,k)))
+        Heff2 = abs(vh(i,J-1,k) * G%IdxCv(i,J-1)) / (eps_vel+abs(v(i,J-1,k)))
+        Heff2 = max(Heff2, min(h(i,j-1,k),h(i,j,k)))
+        Heff2 = min(Heff2, max(h(i,j-1,k),h(i,j,k)))
+        Heff3 = abs(vh(i+1,J,k) * G%IdxCv(i+1,J)) / (eps_vel+abs(v(i+1,J,k)))
+        Heff3 = max(Heff3, min(h(i+1,j,k),h(i+1,j+1,k)))
+        Heff3 = min(Heff3, max(h(i+1,j,k),h(i+1,j+1,k)))
+        Heff4 = abs(vh(i+1,J-1,k) * G%IdxCv(i+1,J-1)) / (eps_vel+abs(v(i+1,J-1,k)))
+        Heff4 = max(Heff4, min(h(i+1,j-1,k),h(i+1,j,k)))
+        Heff4 = min(Heff4, max(h(i+1,j-1,k),h(i+1,j,k)))
+        if (CS%PV_Adv_Scheme == PV_ADV_CENTERED) then
+          CAu(I,j,k) = 0.5*(abs_vort(I,J)+abs_vort(I,J-1)) * &amp;
+                       ((vh(i,J,k) + vh(i+1,J-1,k)) + (vh(i,J-1,k) + vh(i+1,J,k)) ) /  &amp;
+                       (h_tiny + ((Heff1+Heff4) + (Heff2+Heff3)) ) * G%IdxCu(I,j)
+        elseif (CS%PV_Adv_Scheme == PV_ADV_UPWIND1) then
+          VHeff = ((vh(i,J,k) + vh(i+1,J-1,k)) + (vh(i,J-1,k) + vh(i+1,J,k)) )
+          QVHeff = 0.5*( (abs_vort(I,J)+abs_vort(I,J-1))*VHeff &amp;
+                        -(abs_vort(I,J)-abs_vort(I,J-1))*abs(VHeff) )
+          CAu(I,j,k) = (QVHeff / ( h_tiny + ((Heff1+Heff4) + (Heff2+Heff3)) ) ) * G%IdxCu(I,j)
+        endif
+      enddo ; enddo
+    endif
+    ! Add in the additonal terms with Arakawa &amp; Lamb.
+    if ((CS%Coriolis_Scheme == ARAKAWA_LAMB81) .or. &amp;
+        (CS%Coriolis_Scheme == AL_BLEND)) then ; do j=js,je ; do I=Isq,Ieq
+      CAu(I,j,k) = CAu(I,j,k) + &amp;
+            (ep_u(i,j)*uh(I-1,j,k) - ep_u(i+1,j)*uh(I+1,j,k)) * G%IdxCu(I,j)
+    enddo ; enddo ; endif
+
+
+    if (CS%bound_Coriolis) then
+      do j=js,je ; do I=Isq,Ieq
+        max_fv = MAX(max_fvq(I,J), max_fvq(I,J-1))
+        min_fv = MIN(min_fvq(I,J), min_fvq(I,J-1))
+       ! CAu(I,j,k) = min( CAu(I,j,k), max_fv )
+       ! CAu(I,j,k) = max( CAu(I,j,k), min_fv )
+        if (CAu(I,j,k) &gt; max_fv) then
+            CAu(I,j,k) = max_fv
+        else
+          if (CAu(I,j,k) &lt; min_fv) CAu(I,j,k) = min_fv
+        endif
+      enddo ; enddo
+    endif
+
+    ! Term - d(KE)/dx.
+    do j=js,je ; do I=Isq,Ieq
+      CAu(I,j,k) = CAu(I,j,k) - KEx(I,j)
+      if (associated(AD%gradKEu)) AD%gradKEu(I,j,k) = -KEx(I,j)
+</code></pre>
+</section>
+
+<section id="coriolis-advection-1" class="title-slide slide level1">
+<h1>Coriolis advection</h1>
+<pre class=" numberLines" data-code="" data-start-line="669
+
+" data-end-line="694
+
+" data-line-numbers="7-20
+
+" data-startFrom="669
+
+"><code>    ! Add in the additonal terms with Arakawa &amp; Lamb.
+    if ((CS%Coriolis_Scheme == ARAKAWA_LAMB81) .or. &amp;
+        (CS%Coriolis_Scheme == AL_BLEND)) then ; do j=js,je ; do I=Isq,Ieq
+      CAu(I,j,k) = CAu(I,j,k) + &amp;
+            (ep_u(i,j)*uh(I-1,j,k) - ep_u(i+1,j)*uh(I+1,j,k)) * G%IdxCu(I,j)
+    enddo ; enddo ; endif
+
+    if (CS%bound_Coriolis) then
+      do j=js,je ; do I=Isq,Ieq
+        fv1 = abs_vort(I,J) * v(i+1,J,k)
+        fv2 = abs_vort(I,J) * v(i,J,k)
+        fv3 = abs_vort(I,J-1) * v(i+1,J-1,k)
+        fv4 = abs_vort(I,J-1) * v(i,J-1,k)
+
+        max_fv = max(fv1, fv2, fv3, fv4)
+        min_fv = min(fv1, fv2, fv3, fv4)
+
+        CAu(I,j,k) = min(CAu(I,j,k), max_fv)
+        CAu(I,j,k) = max(CAu(I,j,k), min_fv)
+      enddo ; enddo
+    endif
+
+    ! Term - d(KE)/dx.
+    do j=js,je ; do I=Isq,Ieq
+      CAu(I,j,k) = CAu(I,j,k) - KEx(I,j)
+</code></pre>
+</section>
+
+<section id="coriolis-speedup" class="title-slide slide level1">
+<h1>Coriolis Speedup</h1>
+<table>
+<thead>
+<tr class="header">
+<th>Platform</th>
+<th>Old</th>
+<th>New</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><p>Gaea</p></td>
+<td><p>1.06</p>
+<p>(2.79)</p></td>
+<td><p>0.87</p>
+<p>(3.43)</p></td>
+<td><p>1.23x</p></td>
+</tr>
+<tr class="even">
+<td><p>AMD Ryzen 5</p></td>
+<td><p>1.11</p>
+<p>(2.68)</p></td>
+<td><p>0.64</p>
+<p>(5.21)</p></td>
+<td><p>1.74x</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 
 <section id="example-3-vertical-viscosity" class="title-slide slide level1">
@@ -815,6 +1215,17 @@
 <ul>
 <li>if(do_I(:))</li>
 </ul>
+<dl>
+<dt>Platform GFLOP/s Time</dt>
+<dd><p>Old New Old New</p>
+</dd>
+</dl>
+<p>Gaea</p>
+<dl>
+<dt>AMD Ryzen 5 1.29 2.00 1.54 1.50</dt>
+<dd><p>2.50 5.72 0.82 0.68</p>
+</dd>
+</dl>
 </section>
 
 <section id="example-3-btstep" class="title-slide slide level1">

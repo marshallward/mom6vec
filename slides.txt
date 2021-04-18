@@ -169,15 +169,6 @@ AVX      8 SP/4 DP   28.8     28.790
 
 .. :math:`f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}`
 
-.. notes::
-
-   sse_add GFLOP/s: 14.395 (14.395 / thread)
-   sse_fma GFLOP/s: 28.792 (28.792 / thread)
-   sse_fmac GFLOP/s: 57.576 (57.576 / thread)
-   avx_add GFLOP/s: 28.790 (28.790 / thread)
-   avx_mac GFLOP/s: 57.576 (57.576 / thread)
-   avx_fma GFLOP/s: 57.583 (57.583 / thread)
-
 
 Fused-Multiply Add
 ==================
@@ -232,17 +223,6 @@ AVX      Add         28.8     28.788
          2x FMA      115.2    115.160
 ======   ==========  =======  =======
 
-.. notes::
-
-   sse_add GFLOP/s: 14.394 (14.394 / thread)
-   sse_fma GFLOP/s: 28.790 (28.790 / thread)
-   sse_fmac GFLOP/s: 57.580 (57.580 / thread)
-   avx_add GFLOP/s: 28.788 (28.788 / thread)
-   avx_mac GFLOP/s: 57.580 (57.580 / thread)
-   avx_fma GFLOP/s: 57.580 (57.580 / thread)
-   avx_fmac GFLOP/s: 115.160 (115.160 / thread)
-
-
  
 Array Ops
 =========
@@ -250,26 +230,52 @@ Array Ops
 .. image:: img/gaea_flops.svg
 
 
+Array Ops
+=========
+
+.. image:: img/gaea_flops_cached.svg
+
+
 Arithmetic Intensity
 ====================
 
-======================  ====     =======
-Expression              AI       GFLOP/s
-======================  ====     =======
-y[:] = a x[:]           1/4      26.43
-y[:] = x[:] + x[:]      1/4      24.98
-y[:] = x[:] + y[:]      1/8      18.34
-y[:] = a x[:] + y[:]    1/4      37.58
-y[:] = a x[:] + b y[:]  3/8      51.08
-y[:] = x[1:] - x[:-1]   1/8      14.07
-y[:] = x[8:] - x[:-8]   1/8      18.39
-======================  ====     =======
+======================  ===================  ===========
+Expression              AI                   Max GFLOP/s
+======================  ===================  ===========
+y[:] = a x[:]           :math:`\frac{1}{4}`  26.43
+y[:] = x[:] + x[:]      :math:`\frac{1}{4}`  24.98
+y[:] = x[:] + y[:]      :math:`\frac{1}{8}`  18.34
+y[:] = a x[:] + y[:]    :math:`\frac{1}{4}`  37.58
+y[:] = a x[:] + b y[:]  :math:`\frac{3}{8}`  51.08
+y[:] = x[1:] - x[:-1]   :math:`\frac{1}{8}`  14.07
+y[:] = x[8:] - x[:-8]   :math:`\frac{1}{8}`  18.39
+======================  ===================  ===========
 
 
 MOM6 sample config
 ==================
 
-Describe the "benchmark"
+.. image:: img/benchmark_topo.svg
+   :class: float
+   :width: 35%
+
+* :math:`32 \times 32` grid, 75 level
+
+   * ~76k / field
+
+* 288 steps (3 day, :math:`\Delta t = 900s`)
+
+* "Benchmark" configuration:
+
+   * Split barotropic
+
+   * Biharmonic visc
+
+   * Thickness diffusivity
+
+   * Bounded Coriolis
+
+   * ??
 
 
 Profiling with perf
@@ -284,6 +290,13 @@ Profiling with perf
 
 .. image:: img/perf_lines.png
    :width: 80%
+
+
+perf stat
+=========
+
+.. include:: perf.stat
+   :code:
 
 
 MOM6 FLOP rates
@@ -366,10 +379,10 @@ Non-vectorized code
    │ 6.53 │         vmovsd   %xmm14,-0x8e8(%rbp)
 
 
-==========  ============
-``vaddsd``  Serial add
-``vaddpd``  Parallel add
-==========  ============
+==========  ========
+``v___sd``  Serial
+``v___pd``  Parallel
+==========  ========
 
 
 Excessive Stack
@@ -392,16 +405,73 @@ vmaxsd   Serial max
 ======   ===================
 
 
-Example 2: CoradCalc
-====================
+Hor Visc Speedup
+=====================
 
-- Gather disparate memory accesses
+============   ======   ======   =======
+Platform       Old      New      Speedup
+============   ======   ======   =======
+Gaea C4        2.23s    1.27s    1.75x
+
+               (1.67)   (2.93)   
+
+Ryzen 5 2600   1.69s    1.01s    1.67x
+
+               (2.30)   (3.76)   
+============   ======   ======   =======
+
+
+Coriolis advection
+==================
+
+.. include:: src/MOM_CoriolisAdv.F90
+   :code:
+   :start-line: 424
+   :end-line: 686
+   :number-lines: 424
+   :data-line-numbers: 1|17-32|245-257
+
+
+Coriolis advection
+==================
+
+.. include:: src/MOM_CoriolisAdv_vec.F90
+   :code:
+   :start-line: 669
+   :end-line: 694
+   :number-lines: 669
+   :data-line-numbers: 7-20
+
+
+Coriolis Speedup
+================
+
+
+===========    ======   ======   =======
+Platform       Old      New      Speedup
+===========    ======   ======   =======
+Gaea           1.06     0.87     1.23x
+
+               (2.79)   (3.43)   
+
+AMD Ryzen 5    1.11     0.64     1.74x
+
+               (2.68)   (5.21)   
+===========    ======   ======   =======
 
 
 Example 3: Vertical Viscosity
 =============================
 
 - if(do_I(:))
+
+
+Platform       GFLOP/s         Time
+               Old   New      Old   New
+Gaea
+
+AMD Ryzen 5    1.29  2.00     1.54  1.50
+               2.50  5.72     0.82  0.68
 
 
 Example 3: ``btstep``

@@ -15,6 +15,8 @@ FLAGS=-s \
 DOTFILES=$(wildcard dot/*.dot)
 DOTFIGURES=$(patsubst %.dot,%.svg,$(subst dot/,img/,$(DOTFILES)))
 
+SOURCE=$(wildcard src/*.F90) perf.stat
+
 all: index.html reveal.js
 
 reveal.js:
@@ -25,7 +27,7 @@ reveal.js:
 reveal.js/css/theme/gfdl.css: gfdl.css
 	cp gfdl.css reveal.js/css/theme/
 
-index.html: slides.txt gfdl.revealjs reveal.js/css/theme/gfdl.css $(DOTFIGURES)
+index.html: slides.txt gfdl.revealjs reveal.js/css/theme/gfdl.css $(DOTFIGURES) $(SOURCE)
 	pandoc ${FLAGS} $< -o $@
 
 img/%.svg: dot/%.dot
