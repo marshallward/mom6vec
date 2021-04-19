@@ -236,6 +236,18 @@ Array Ops
 .. image:: img/gaea_flops_cached.svg
 
 
+Arrays @ AMD
+============
+
+.. image:: img/zen3_flops.svg
+
+
+Arrays @ AMD
+============
+
+.. image:: img/zen3_flops_cached.svg
+
+
 Arithmetic Intensity
 ====================
 
@@ -259,23 +271,23 @@ MOM6 sample config
    :class: float
    :width: 35%
 
-* :math:`32 \times 32` grid, 75 level
+* 32 × 32 grid, 75 level
 
-   * ~76k / field
+   - ~76k / field
 
 * 288 steps (3 day, :math:`\Delta t = 900s`)
 
 * "Benchmark" configuration:
 
-   * Split barotropic
+   - Split barotropic
 
-   * Biharmonic visc
+   - Biharmonic visc
 
-   * Thickness diffusivity
+   - Thickness diffusivity
 
-   * Bounded Coriolis
+   - Bounded Coriolis
 
-   * ??
+   - ??
 
 
 Profiling with perf
@@ -302,59 +314,7 @@ perf stat
 MOM6 FLOP rates
 ===============
 
-
-========================== ===== =======
-Subroutine                 %time GFLOP/s
-========================== ===== =======
-btstep                     12.94 0.89
-horizontal_viscosity       6.98  2.30
-vertvisc_coef              6.36  1.29
-coradcalc                  4.58  2.68
-int_density_dz_wright      4.14  8.60
-zonal_flux_adjust          3.59  3.44
-set_merid_bt_cont          3.41  3.17
-find_coupling_coef         3.40  2.50
-========================== ===== =======
-
-
-With modules...
----------------
-
-
-======================  ========================== ===== =======
-Module                  Subroutine                 %time GFLOP/s
-======================  ========================== ===== =======
-MOM_barotropic          btstep                     12.94 0.89
-MOM_hor_visc            horizontal_viscosity       6.98  2.30
-MOM_vert_friction       vertvisc_coef              6.36  1.29
-MOM_Coriolisadv         coradcalc                  4.58  2.68
-MOM_EOS_Wright          int_density_dz_wright      4.14  8.60
-MOM_continuity_ppm      zonal_flux_adjust          3.59  3.44
-MOM_continuity_ppm      set_merid_bt_cont          3.41  3.17
-MOM_vert_friction       find_coupling_coef         3.40  2.50
-======================  ========================== ===== =======
-
-
-The rest
---------
-
-======================  ========================== ===== =======
-Module                  Subroutine                 %time GFLOP/s
-======================  ========================== ===== =======
-MOM_continuity_ppm      zonal_flux_layer            3.29    3.54
-MOM_continuity_ppm      meridional_flux_adjust      3.28    3.95
-MOM_continuity_ppm      zonal_mass_flux             3.09    3.88
-MOM_dynamics_split_rk2  step_MOM_dyn_split_rk2      3.09    1.31
-MOM_vert_friction       vertvisc_remnant            2.86    2.16
-MOM_continuity_ppm      ppm_limit_pos               2.72    1.59
-MOM_continuity_ppm      meridional_mass_flux        2.46    4.16
-mpp_domains_mod         mpp_do_group_update_r8      2.28    0.00
-MOM_vert_friction       vertvisc                    2.00    2.06
-MOM_thickness_diffuse   thickness_diffuse_full      1.92    3.78
-<runtime>               memset_avx2_unaligned_erms  1.61    0.16
-MOM_barotropic          btcalc                      1.45    0.50
-======================  ========================== ===== =======
-
+.. image:: img/subroutine_share.svg
 
 
 Horizontal Viscosity
@@ -460,11 +420,25 @@ AMD Ryzen 5    1.11     0.64     1.74x
 ===========    ======   ======   =======
 
 
-Example 3: Vertical Viscosity
-=============================
+Vertical Viscosity
+==================
 
-- if(do_I(:))
+.. include:: src/MOM_vert_friction.F90
+   :code:
+   :start-line: 1248
+   :end-line: 1270
+   :number-lines: 1248
+   :data-line-numbers: 1-23|1|23
 
+
+Vertical Viscosity
+==================
+
+TODO: Remove ``do_I(:)``
+
+
+Vertical Viscosity "speedup"
+============================
 
 Platform       GFLOP/s         Time
                Old   New      Old   New
@@ -474,11 +448,70 @@ AMD Ryzen 5    1.29  2.00     1.54  1.50
                2.50  5.72     0.82  0.68
 
 
-Example 3: ``btstep``
+Barotropic Optimization
+=======================
+
+.. code::
+
+   LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(1491,26)
+      remark #15389: vectorization support: reference eta_wtd(i,j) has unaligned access   [ ../      ../ac/../src/core/MOM_barotropic.F90(1492,7) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15305: vectorization support: vector length 2
+      remark #15399: vectorization support: unroll factor set to 2
+      remark #15309: vectorization support: normalized vectorization overhead 0.300
+      remark #15300: LOOP WAS VECTORIZED
+      remark #15451: unmasked unaligned unit stride stores: 1
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 4
+      remark #15477: vector cost: 2.500
+      remark #15478: estimated potential speedup: 1.450
+      remark #15488: --- end vector cost summary ---
+      remark #25015: Estimate of max trip count of loop=3
+   LOOP END
+
+
+
+Barotropic Optimization...?
+===========================
+
+.. code::
+
+   LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(2383,39)
+      remark #25460: No loop optimizations reported
+   LOOP END
+
+.. code::
+
+   remark #25464: Some optimizations were skipped to constrain compile
+      time. Consider overriding limits (-qoverride-limits).
+
+
+Barotropic Speedup
+==================
+
+Override limits!
+
+===========    ======   ======   =======
+Platform       Old      New      Speedup
+===========    ======   ======   =======
+Gaea           2.35     1.60     1.46x
+
+               (1.19)   (1.74)
+
+Ryzen 5        3.13     1.66     1.89x
+
+               (0.89)   (1.66)
+===========    ======   ======   =======
+
+Sustainable solution is to reduce size of ``btstep()``
+
+
+Barotropic Loop Order
 =====================
 
 * ijk -> kij vectorization
-* "override_limits"
+
+(Work in progress!!!)
 
 
 Mystery Problems
@@ -493,10 +526,40 @@ Hierarchy of Performance
 
 * Enable vectorization
 
-* Eliminate RAM-bound operations (~2GFLOP/s)
+   * Break large loops into smaller loops
 
-   * i.e. reduce memory accesses
+   * No conditionals in loops
+   
+..  This sets up the pipeline: Repeat yourself as much as possible
+
+* Reduce memory-per-loop
+
+   * ``z[:] = a * x[:] + b * y[:]`` should ideally fit in L1
+
+   * Loop should be pulling the next L2->L1 update during this loop
+
+   * Eliminate RAM-bound operations (~2GFLOP/s)
+
+* Reduce memory access
+
+   * i.e. increase arithmetic intensity
+
+   * Avoid deep out-of-order memory access
+
+* Align arrays
+
+  * In C, use posix_memalign, not malloc
+
+  * Actually very difficult in Fortran!
+
+  * Avoid "peel loops", i.e. overcommit your arrays
 
 * Think about algorithm
 
-  * Reduce arithmetic intensity
+  * No rules here, just avoid redundant work
+
+* Software Engineering matters!
+
+  * Keep functions small (<2000 lines?)
+
+  * Keep stack variables small (< L2? L3?)

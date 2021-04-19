@@ -296,6 +296,16 @@
 <p><img data-src="img/gaea_flops_cached.svg" alt="image" /></p>
 </section>
 
+<section id="arrays-amd" class="title-slide slide level1">
+<h1>Arrays @ AMD</h1>
+<p><img data-src="img/zen3_flops.svg" alt="image" /></p>
+</section>
+
+<section id="arrays-amd-1" class="title-slide slide level1">
+<h1>Arrays @ AMD</h1>
+<p><img data-src="img/zen3_flops_cached.svg" alt="image" /></p>
+</section>
+
 <section id="arithmetic-intensity" class="title-slide slide level1">
 <h1>Arithmetic Intensity</h1>
 <table>
@@ -350,7 +360,7 @@
 <h1>MOM6 sample config</h1>
 <p><img data-src="img/benchmark_topo.svg" class="float float" style="width:35.0%" alt="image" /></p>
 <ul>
-<li><p><span class="math inline">\(32 \times 32\)</span> grid, 75 level</p>
+<li><p>32 × 32 grid, 75 level</p>
 <ul>
 <li class="fragment">~76k / field</li>
 </ul></li>
@@ -393,259 +403,11 @@
 </code></pre>
 </section>
 
-<section>
 <section id="mom6-flop-rates" class="title-slide slide level1">
 <h1>MOM6 FLOP rates</h1>
-<table>
-<thead>
-<tr class="header">
-<th>Subroutine</th>
-<th>%time</th>
-<th>GFLOP/s</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>btstep</td>
-<td>12.94</td>
-<td>0.89</td>
-</tr>
-<tr class="even">
-<td>horizontal_viscosity</td>
-<td>6.98</td>
-<td>2.30</td>
-</tr>
-<tr class="odd">
-<td>vertvisc_coef</td>
-<td>6.36</td>
-<td>1.29</td>
-</tr>
-<tr class="even">
-<td>coradcalc</td>
-<td>4.58</td>
-<td>2.68</td>
-</tr>
-<tr class="odd">
-<td>int_density_dz_wright</td>
-<td>4.14</td>
-<td>8.60</td>
-</tr>
-<tr class="even">
-<td>zonal_flux_adjust</td>
-<td>3.59</td>
-<td>3.44</td>
-</tr>
-<tr class="odd">
-<td>set_merid_bt_cont</td>
-<td>3.41</td>
-<td>3.17</td>
-</tr>
-<tr class="even">
-<td>find_coupling_coef</td>
-<td>3.40</td>
-<td>2.50</td>
-</tr>
-</tbody>
-</table>
+<p><img data-src="img/subroutine_share.svg" alt="image" /></p>
 </section>
-<section id="with-modules..." class="slide level2">
-<h2>With modules...</h2>
-<table>
-<thead>
-<tr class="header">
-<th>Module</th>
-<th>Subroutine</th>
-<th>%time</th>
-<th>GFLOP/s</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>MOM_barotropic</td>
-<td>btstep</td>
-<td>12.94</td>
-<td>0.89</td>
-</tr>
-<tr class="even">
-<td>MOM_hor_visc</td>
-<td>horizontal_viscosity</td>
-<td>6.98</td>
-<td>2.30</td>
-</tr>
-<tr class="odd">
-<td>MOM_vert_friction</td>
-<td>vertvisc_coef</td>
-<td>6.36</td>
-<td>1.29</td>
-</tr>
-<tr class="even">
-<td>MOM_Coriolisadv</td>
-<td>coradcalc</td>
-<td>4.58</td>
-<td>2.68</td>
-</tr>
-<tr class="odd">
-<td>MOM_EOS_Wright</td>
-<td>int_density_dz_wright</td>
-<td>4.14</td>
-<td>8.60</td>
-</tr>
-<tr class="even">
-<td>MOM_continuity_ppm</td>
-<td>zonal_flux_adjust</td>
-<td>3.59</td>
-<td>3.44</td>
-</tr>
-<tr class="odd">
-<td>MOM_continuity_ppm</td>
-<td>set_merid_bt_cont</td>
-<td>3.41</td>
-<td>3.17</td>
-</tr>
-<tr class="even">
-<td>MOM_vert_friction</td>
-<td>find_coupling_coef</td>
-<td>3.40</td>
-<td>2.50</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="the-rest" class="slide level2">
-<h2>The rest</h2>
-<table>
-<thead>
-<tr class="header">
-<th>Module</th>
-<th>Subroutine</th>
-<th>%time</th>
-<th>GFLOP/s</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>MOM_continuity_ppm</td>
-<td>zonal_flux_layer</td>
-<td><blockquote>
-<p>3.29</p>
-</blockquote></td>
-<td><blockquote>
-<p>3.54</p>
-</blockquote></td>
-</tr>
-<tr class="even">
-<td>MOM_continuity_ppm</td>
-<td>meridional_flux_adjust</td>
-<td><blockquote>
-<p>3.28</p>
-</blockquote></td>
-<td><blockquote>
-<p>3.95</p>
-</blockquote></td>
-</tr>
-<tr class="odd">
-<td>MOM_continuity_ppm</td>
-<td>zonal_mass_flux</td>
-<td><blockquote>
-<p>3.09</p>
-</blockquote></td>
-<td><blockquote>
-<p>3.88</p>
-</blockquote></td>
-</tr>
-<tr class="even">
-<td>MOM_dynamics_split_rk2</td>
-<td>step_MOM_dyn_split_rk2</td>
-<td><blockquote>
-<p>3.09</p>
-</blockquote></td>
-<td><blockquote>
-<p>1.31</p>
-</blockquote></td>
-</tr>
-<tr class="odd">
-<td>MOM_vert_friction</td>
-<td>vertvisc_remnant</td>
-<td><blockquote>
-<p>2.86</p>
-</blockquote></td>
-<td><blockquote>
-<p>2.16</p>
-</blockquote></td>
-</tr>
-<tr class="even">
-<td>MOM_continuity_ppm</td>
-<td>ppm_limit_pos</td>
-<td><blockquote>
-<p>2.72</p>
-</blockquote></td>
-<td><blockquote>
-<p>1.59</p>
-</blockquote></td>
-</tr>
-<tr class="odd">
-<td>MOM_continuity_ppm</td>
-<td>meridional_mass_flux</td>
-<td><blockquote>
-<p>2.46</p>
-</blockquote></td>
-<td><blockquote>
-<p>4.16</p>
-</blockquote></td>
-</tr>
-<tr class="even">
-<td>mpp_domains_mod</td>
-<td>mpp_do_group_update_r8</td>
-<td><blockquote>
-<p>2.28</p>
-</blockquote></td>
-<td><blockquote>
-<p>0.00</p>
-</blockquote></td>
-</tr>
-<tr class="odd">
-<td>MOM_vert_friction</td>
-<td>vertvisc</td>
-<td><blockquote>
-<p>2.00</p>
-</blockquote></td>
-<td><blockquote>
-<p>2.06</p>
-</blockquote></td>
-</tr>
-<tr class="even">
-<td>MOM_thickness_diffuse</td>
-<td>thickness_diffuse_full</td>
-<td><blockquote>
-<p>1.92</p>
-</blockquote></td>
-<td><blockquote>
-<p>3.78</p>
-</blockquote></td>
-</tr>
-<tr class="odd">
-<td>&lt;runtime&gt;</td>
-<td>memset_avx2_unaligned_erms</td>
-<td><blockquote>
-<p>1.61</p>
-</blockquote></td>
-<td><blockquote>
-<p>0.16</p>
-</blockquote></td>
-</tr>
-<tr class="even">
-<td>MOM_barotropic</td>
-<td>btcalc</td>
-<td><blockquote>
-<p>1.45</p>
-</blockquote></td>
-<td><blockquote>
-<p>0.50</p>
-</blockquote></td>
-</tr>
-</tbody>
-</table>
-</section></section>
+
 <section id="horizontal-viscosity" class="title-slide slide level1">
 <h1>Horizontal Viscosity</h1>
 <pre class=" numberLines" data-code="" data-start-line="831
@@ -1210,11 +972,48 @@
 </table>
 </section>
 
-<section id="example-3-vertical-viscosity" class="title-slide slide level1">
-<h1>Example 3: Vertical Viscosity</h1>
-<ul>
-<li>if(do_I(:))</li>
-</ul>
+<section id="vertical-viscosity" class="title-slide slide level1">
+<h1>Vertical Viscosity</h1>
+<pre class=" numberLines" data-code="" data-start-line="1248
+
+" data-end-line="1270
+
+" data-line-numbers="1-23|1|23
+
+" data-startFrom="1248
+
+"><code>  do K=nz,2,-1 ; do i=is,ie ; if (do_i(i)) then
+    !    botfn determines when a point is within the influence of the bottom
+    !  boundary layer, going from 1 at the bottom to 0 in the interior.
+    z2 = z_i(i,k)
+    botfn = 1.0 / (1.0 + 0.09*z2*z2*z2*z2*z2*z2)
+
+    if (CS%bottomdraglaw) then
+      Kv_tot(i,K) = Kv_tot(i,K) + (kv_bbl(i) - CS%Kv)*botfn
+      r = 0.5*(hvel(i,k) + hvel(i,k-1))
+      if (r &gt; bbl_thick(i)) then
+        h_shear = ((1.0 - botfn) * r + botfn*bbl_thick(i)) + h_neglect
+      else
+        h_shear = r + h_neglect
+      endif
+    else
+      Kv_tot(i,K) = Kv_tot(i,K) + (CS%Kvbbl-CS%Kv)*botfn
+      h_shear = 0.5*(hvel(i,k) + hvel(i,k-1) + h_neglect)
+    endif
+
+    ! Calculate the coupling coefficients from the viscosities.
+    a_cpl(i,K) = Kv_tot(i,K) / (h_shear*GV%H_to_Z + I_amax*Kv_tot(i,K))
+  endif ; enddo ; enddo ! i &amp; k loops
+</code></pre>
+</section>
+
+<section id="vertical-viscosity-1" class="title-slide slide level1">
+<h1>Vertical Viscosity</h1>
+<p>TODO: Remove <code>do_I(:)</code></p>
+</section>
+
+<section id="vertical-viscosity-speedup" class="title-slide slide level1">
+<h1>Vertical Viscosity "speedup"</h1>
 <dl>
 <dt>Platform GFLOP/s Time</dt>
 <dd><p>Old New Old New</p>
@@ -1228,12 +1027,74 @@
 </dl>
 </section>
 
-<section id="example-3-btstep" class="title-slide slide level1">
-<h1>Example 3: <code>btstep</code></h1>
+<section id="barotropic-optimization" class="title-slide slide level1">
+<h1>Barotropic Optimization</h1>
+<pre class=""><code>LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(1491,26)
+   remark #15389: vectorization support: reference eta_wtd(i,j) has unaligned access   [ ../      ../ac/../src/core/MOM_barotropic.F90(1492,7) ]
+   remark #15381: vectorization support: unaligned access used inside loop body
+   remark #15305: vectorization support: vector length 2
+   remark #15399: vectorization support: unroll factor set to 2
+   remark #15309: vectorization support: normalized vectorization overhead 0.300
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15451: unmasked unaligned unit stride stores: 1
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 4
+   remark #15477: vector cost: 2.500
+   remark #15478: estimated potential speedup: 1.450
+   remark #15488: --- end vector cost summary ---
+   remark #25015: Estimate of max trip count of loop=3
+LOOP END</code></pre>
+</section>
+
+<section id="barotropic-optimization..." class="title-slide slide level1">
+<h1>Barotropic Optimization...?</h1>
+<pre class=""><code>LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(2383,39)
+   remark #25460: No loop optimizations reported
+LOOP END</code></pre>
+<pre class=""><code>remark #25464: Some optimizations were skipped to constrain compile
+   time. Consider overriding limits (-qoverride-limits).</code></pre>
+</section>
+
+<section id="barotropic-speedup" class="title-slide slide level1">
+<h1>Barotropic Speedup</h1>
+<p>Override limits!</p>
+<table>
+<thead>
+<tr class="header">
+<th>Platform</th>
+<th>Old</th>
+<th>New</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><p>Gaea</p></td>
+<td><p>2.35</p>
+<p>(1.19)</p></td>
+<td><p>1.60</p>
+<p>(1.74)</p></td>
+<td><p>1.46x</p></td>
+</tr>
+<tr class="even">
+<td><p>Ryzen 5</p></td>
+<td><p>3.13</p>
+<p>(0.89)</p></td>
+<td><p>1.66</p>
+<p>(1.66)</p></td>
+<td><p>1.89x</p></td>
+</tr>
+</tbody>
+</table>
+<p>Sustainable solution is to reduce size of <code>btstep()</code></p>
+</section>
+
+<section id="barotropic-loop-order" class="title-slide slide level1">
+<h1>Barotropic Loop Order</h1>
 <ul>
 <li>ijk -&gt; kij vectorization</li>
-<li>"override_limits"</li>
 </ul>
+<p>(Work in progress!!!)</p>
 </section>
 
 <section id="mystery-problems" class="title-slide slide level1">
@@ -1247,14 +1108,38 @@
 <section id="hierarchy-of-performance" class="title-slide slide level1">
 <h1>Hierarchy of Performance</h1>
 <ul>
-<li><p>Enable vectorization</p></li>
-<li><p>Eliminate RAM-bound operations (~2GFLOP/s)</p>
+<li><p>Enable vectorization</p>
 <ul>
-<li class="fragment">i.e. reduce memory accesses</li>
+<li class="fragment">Break large loops into smaller loops</li>
+<li class="fragment">No conditionals in loops</li>
+</ul></li>
+</ul>
+<ul>
+<li><p>Reduce memory-per-loop</p>
+<ul>
+<li class="fragment"><code>z[:] = a * x[:] + b * y[:]</code> should ideally fit in L1</li>
+<li class="fragment">Loop should be pulling the next L2-&gt;L1 update during this loop</li>
+<li class="fragment">Eliminate RAM-bound operations (~2GFLOP/s)</li>
+</ul></li>
+<li><p>Reduce memory access</p>
+<ul>
+<li class="fragment">i.e. increase arithmetic intensity</li>
+<li class="fragment">Avoid deep out-of-order memory access</li>
+</ul></li>
+<li><p>Align arrays</p>
+<ul>
+<li>In C, use posix_memalign, not malloc</li>
+<li>Actually very difficult in Fortran!</li>
+<li>Avoid "peel loops", i.e. overcommit your arrays</li>
 </ul></li>
 <li><p>Think about algorithm</p>
 <ul>
-<li>Reduce arithmetic intensity</li>
+<li>No rules here, just avoid redundant work</li>
+</ul></li>
+<li><p>Software Engineering matters!</p>
+<ul>
+<li>Keep functions small (&lt;2000 lines?)</li>
+<li>Keep stack variables small (&lt; L2? L3?)</li>
 </ul></li>
 </ul>
 </section>
