@@ -100,29 +100,12 @@
 </aside>
 </section>
 
-<section>
 <section id="cpu-scaling" class="title-slide slide level1">
 <h1>CPU Scaling</h1>
 <p><img data-src="img/scaling_ocn.svg" alt="image" /></p>
 <p>MOM5 scaling in ACCESS-OM2</p>
 </section>
-<section id="fluid-dynamics-scaling" class="slide level2">
-<h2>Fluid Dynamics Scaling</h2>
-<p>Tension between local (hyperbolic) solvers</p>
-<p><span class="math display">\[\begin{aligned}
-\frac{\partial \mathbf{u}}{\partial t}
-   &amp;= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
-\end{aligned}\]</span></p>
-<p>and global (elliptic) solvers</p>
-<p><span class="math display">\[\begin{aligned}
-\nabla^2 p
-   &amp;= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
-      + \nabla \cdot \mathbf{F} \\
-   &amp;\approx \nabla \cdot \mathbf{F} \text{(?)} \\
-\end{aligned}\]</span></p>
-<p>... unless you can cheat (aka oceanography)</p>
-</section></section>
-<section>
+
 <section id="clock-speed" class="title-slide slide level1">
 <h1>Clock Speed</h1>
 <p><img data-src="img/clockspeed.svg" style="width:70.0%" alt="image" /></p>
@@ -139,10 +122,7 @@
 <p>After 2005, thermal leakage led to P &gt;&gt; A</p>
 </aside>
 </section>
-<section id="clock-speed-vs-of-cores" class="slide level2">
-<h2>Clock Speed vs # of Cores</h2>
-<p>Using more cores further reduces clock speed!</p>
-</section></section>
+
 <section>
 <section id="vectorization" class="title-slide slide level1">
 <h1>Vectorization</h1>
@@ -172,6 +152,21 @@
 <p>Showing the normalization of Intel-based architectures.</p>
 </aside>
 </section></section>
+<section id="how-to-improve-performance" class="title-slide slide level1">
+<h1>How to improve performance?</h1>
+<dl>
+<dt>CPU scaling</dt>
+<dd><p>Viable but CFL-limited</p>
+</dd>
+<dt>Clock speed</dt>
+<dd><p>Unchanged for &gt;15 years</p>
+</dd>
+<dt>Vectorization</dt>
+<dd><p>Potential speedup?</p>
+</dd>
+</dl>
+</section>
+
 <section id="vector-instructions" class="title-slide slide level1">
 <h1>Vector Instructions</h1>
 <p><img data-src="img/avx.svg" alt="image" /></p>
@@ -187,15 +182,15 @@
 <tbody>
 <tr class="odd">
 <td>SSE</td>
-<td>4 SP/2 DP</td>
-<td>14.4</td>
-<td>14.394</td>
+<td>2 doubles</td>
+<td>7.2</td>
+<td>7.196</td>
 </tr>
 <tr class="even">
 <td>AVX</td>
-<td>8 SP/4 DP</td>
-<td>28.8</td>
-<td>28.790</td>
+<td>4 doubles</td>
+<td>14.4</td>
+<td>14.395</td>
 </tr>
 </tbody>
 </table>
@@ -203,7 +198,7 @@
 
 <section id="fused-multiply-add" class="title-slide slide level1">
 <h1>Fused-Multiply Add</h1>
-<p>FMA: <span class="math inline">\(d \leftarrow a \times b + c\)</span></p>
+<p><span class="math inline">\(d \leftarrow a \times b + c\)</span></p>
 <table>
 <thead>
 <tr class="header">
@@ -218,19 +213,19 @@
 <td><p>SSE</p></td>
 <td><p>Add</p>
 <p>FMA</p></td>
-<td><p>14.4</p>
-<p>28.8</p></td>
-<td><p>14.394</p>
-<p>28.790</p></td>
+<td><p>7.2</p>
+<p>14.4</p></td>
+<td><p>7.196</p>
+<p>14.394</p></td>
 </tr>
 <tr class="even">
 <td><p>AVX</p></td>
 <td><p>Add</p>
 <p>FMA</p></td>
-<td><p>28.8</p>
-<p>57.6</p></td>
-<td><p>28.788</p>
-<p>57.580</p></td>
+<td><p>14.4</p>
+<p>28.8</p></td>
+<td><p>14.395</p>
+<p>28.788</p></td>
 </tr>
 </tbody>
 </table>
@@ -260,12 +255,12 @@
 <td><p>Add</p>
 <p>FMA</p>
 <p>2x FMA</p></td>
-<td><p>14.4</p>
-<p>28.8</p>
-<p>57.6</p></td>
-<td><p>14.394</p>
-<p>28.790</p>
-<p>57.580</p></td>
+<td><p>7.2</p>
+<p>14.4</p>
+<p>28.8</p></td>
+<td><p>7.196</p>
+<p>14.394</p>
+<p>28.788</p></td>
 </tr>
 <tr class="even">
 <td><p>AVX</p></td>
@@ -273,105 +268,128 @@
 <p>Add+Mul</p>
 <p>FMA</p>
 <p>2x FMA</p></td>
-<td><p>28.8</p>
-<p>57.6</p>
-<p>57.6</p>
-<p>115.2</p></td>
-<td><p>28.788</p>
-<p>57.580</p>
-<p>57.580</p>
-<p>115.160</p></td>
+<td><p>14.4</p>
+<p>28.8</p>
+<p>28.8</p>
+<p>57.6</p></td>
+<td><p>14.395</p>
+<p>28.788</p>
+<p>28.788</p>
+<p>57.576</p></td>
 </tr>
 </tbody>
 </table>
 </section>
 
-<section id="array-ops" class="title-slide slide level1">
-<h1>Array Ops</h1>
+<section>
+<section id="array-performance" class="title-slide slide level1">
+<h1>Array Performance</h1>
+<p><img data-src="img/gaea_dp_flops.svg" alt="image" /></p>
+</section>
+<section id="amd-arrays" class="slide level2">
+<h2>AMD Arrays</h2>
+<p><img data-src="img/zen3_dp_flops.svg" alt="image" /></p>
+</section>
+<section id="single-precision" class="slide level2">
+<h2>Single Precision</h2>
 <p><img data-src="img/gaea_flops.svg" alt="image" /></p>
+</section></section>
+<section>
+<section id="array-cacheing" class="title-slide slide level1">
+<h1>Array Cacheing</h1>
+<p><img data-src="img/gaea_dp_flops_cached.svg" alt="image" /></p>
 </section>
-
-<section id="array-ops-1" class="title-slide slide level1">
-<h1>Array Ops</h1>
-<p><img data-src="img/gaea_flops_cached.svg" alt="image" /></p>
+<section id="amd-cacheing" class="slide level2">
+<h2>AMD Cacheing</h2>
+<p><img data-src="img/zen3_dp_flops_cached.svg" alt="image" /></p>
+</section></section>
+<section>
+<section id="memory-bound" class="title-slide slide level1">
+<h1>Memory-bound</h1>
+<p><img data-src="img/gaea_dp_flops_membnd.svg" alt="image" /></p>
 </section>
-
-<section id="arrays-amd" class="title-slide slide level1">
-<h1>Arrays @ AMD</h1>
-<p><img data-src="img/zen3_flops.svg" alt="image" /></p>
-</section>
-
-<section id="arrays-amd-1" class="title-slide slide level1">
-<h1>Arrays @ AMD</h1>
-<p><img data-src="img/zen3_flops_cached.svg" alt="image" /></p>
-</section>
-
-<section id="arithmetic-intensity" class="title-slide slide level1">
-<h1>Arithmetic Intensity</h1>
+<section id="peak-array-ops" class="slide level2">
+<h2>Peak Array Ops</h2>
 <table>
 <thead>
 <tr class="header">
 <th>Expression</th>
-<th>AI</th>
-<th>Max GFLOP/s</th>
+<th>Max</th>
+<th>L2</th>
+<th>L3</th>
+<th>DRAM</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>y[:] = a x[:]</td>
-<td><span class="math inline">\(\frac{1}{4}\)</span></td>
-<td>26.43</td>
+<td>11.1</td>
+<td>3.5</td>
+<td>1.8</td>
+<td>0.7</td>
 </tr>
 <tr class="even">
 <td>y[:] = x[:] + x[:]</td>
-<td><span class="math inline">\(\frac{1}{4}\)</span></td>
-<td>24.98</td>
+<td>12.3</td>
+<td>3.6</td>
+<td>1.8</td>
+<td>0.7</td>
 </tr>
 <tr class="odd">
 <td>y[:] = x[:] + y[:]</td>
-<td><span class="math inline">\(\frac{1}{8}\)</span></td>
-<td>18.34</td>
+<td>9.3</td>
+<td>3.5</td>
+<td>1.8</td>
+<td>0.7</td>
 </tr>
 <tr class="even">
 <td>y[:] = a x[:] + y[:]</td>
-<td><span class="math inline">\(\frac{1}{4}\)</span></td>
-<td>37.58</td>
+<td>18.3</td>
+<td>7.0</td>
+<td>3.6</td>
+<td>1.4</td>
 </tr>
 <tr class="odd">
 <td>y[:] = a x[:] + b y[:]</td>
-<td><span class="math inline">\(\frac{3}{8}\)</span></td>
-<td>51.08</td>
+<td>23.9</td>
+<td>10.6</td>
+<td>5.5</td>
+<td>2.0</td>
 </tr>
 <tr class="even">
 <td>y[:] = x[1:] - x[:-1]</td>
-<td><span class="math inline">\(\frac{1}{8}\)</span></td>
-<td>14.07</td>
+<td>7.0</td>
+<td>3.4</td>
+<td>1.8</td>
+<td>0.7</td>
 </tr>
 <tr class="odd">
 <td>y[:] = x[8:] - x[:-8]</td>
-<td><span class="math inline">\(\frac{1}{8}\)</span></td>
-<td>18.39</td>
+<td>9.3</td>
+<td>3.5</td>
+<td>1.8</td>
+<td>0.7</td>
 </tr>
 </tbody>
 </table>
-</section>
-
+</section></section>
 <section id="mom6-sample-config" class="title-slide slide level1">
 <h1>MOM6 sample config</h1>
 <p><img data-src="img/benchmark_topo.svg" class="float float" style="width:35.0%" alt="image" /></p>
 <ul>
 <li><p>32 × 32 grid, 75 level</p>
 <ul>
-<li class="fragment">~76k / field</li>
+<li class="fragment">~76k / field (~<span class="math inline">\(2^{16}\)</span>)</li>
+<li class="fragment"><span class="math inline">\(2^{10}\)</span> per level</li>
 </ul></li>
 <li><p>288 steps (3 day, <span class="math inline">\(\Delta t = 900s\)</span>)</p></li>
 <li><p>"Benchmark" configuration:</p>
 <ul>
 <li class="fragment">Split barotropic</li>
-<li class="fragment">Biharmonic visc</li>
-<li class="fragment">Thickness diffusivity</li>
-<li class="fragment">Bounded Coriolis</li>
-<li class="fragment">??</li>
+<li class="fragment">Smagorinsky biharmonic</li>
+<li class="fragment">Thermo, Wright EOS</li>
+<li class="fragment">Bounded Coriolis terms</li>
+<li class="fragment">Layered (no ALE)</li>
 </ul></li>
 </ul>
 </section>
@@ -403,9 +421,21 @@
 </code></pre>
 </section>
 
-<section id="mom6-flop-rates" class="title-slide slide level1">
-<h1>MOM6 FLOP rates</h1>
-<p><img data-src="img/subroutine_share.svg" alt="image" /></p>
+<section id="profile-overview" class="title-slide slide level1">
+<h1>Profile Overview</h1>
+<p><img data-src="img/subroutine_profile.svg" alt="image" /></p>
+<p>(NOTE: AMD timings)</p>
+</section>
+
+<section id="investigation-targets" class="title-slide slide level1">
+<h1>Investigation Targets</h1>
+<ul>
+<li>Horizontal viscosity</li>
+<li>Coriolis force advection (<code>coradcalc</code>)</li>
+<li>Barotropic solver (<code>btstep</code>)</li>
+<li>Vertical viscosity (<code>find_coupling_coef</code>)</li>
+<li>EOS (<code>int_density_dz_wright</code>)</li>
+</ul>
 </section>
 
 <section id="horizontal-viscosity" class="title-slide slide level1">
@@ -595,6 +625,11 @@
 </table>
 </section>
 
+<section id="hor-visc-update" class="title-slide slide level1">
+<h1>Hor Visc Update</h1>
+<p>TODO</p>
+</section>
+
 <section id="hor-visc-speedup" class="title-slide slide level1">
 <h1>Hor Visc Speedup</h1>
 <table>
@@ -616,7 +651,7 @@
 <td><p>1.75x</p></td>
 </tr>
 <tr class="even">
-<td><p>Ryzen 5 2600</p></td>
+<td><p>AMD @ home</p></td>
 <td><p>1.69s</p>
 <p>(2.30)</p></td>
 <td><p>1.01s</p>
@@ -961,7 +996,7 @@
 <td><p>1.23x</p></td>
 </tr>
 <tr class="even">
-<td><p>AMD Ryzen 5</p></td>
+<td><p>AMD</p></td>
 <td><p>1.11</p>
 <p>(2.68)</p></td>
 <td><p>0.64</p>
@@ -970,6 +1005,68 @@
 </tr>
 </tbody>
 </table>
+</section>
+
+<section id="barotropic-optimization" class="title-slide slide level1">
+<h1>Barotropic Optimization</h1>
+<pre class=""><code>LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(1491,26)
+   remark #15389: vectorization support: reference eta_wtd(i,j) has unaligned access   [ ../      ../ac/../src/core/MOM_barotropic.F90(1492,7) ]
+   remark #15381: vectorization support: unaligned access used inside loop body
+   remark #15305: vectorization support: vector length 2
+   remark #15399: vectorization support: unroll factor set to 2
+   remark #15309: vectorization support: normalized vectorization overhead 0.300
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15451: unmasked unaligned unit stride stores: 1
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 4
+   remark #15477: vector cost: 2.500
+   remark #15478: estimated potential speedup: 1.450
+   remark #15488: --- end vector cost summary ---
+   remark #25015: Estimate of max trip count of loop=3
+LOOP END</code></pre>
+</section>
+
+<section id="barotropic-optimization..." class="title-slide slide level1">
+<h1>Barotropic Optimization...?</h1>
+<pre class=""><code>LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(2383,39)
+   remark #25460: No loop optimizations reported
+LOOP END</code></pre>
+<pre class=""><code>remark #25464: Some optimizations were skipped to constrain compile
+   time. Consider overriding limits (-qoverride-limits).</code></pre>
+</section>
+
+<section id="barotropic-speedup" class="title-slide slide level1">
+<h1>Barotropic Speedup</h1>
+<p>Engage the Override!</p>
+<table>
+<thead>
+<tr class="header">
+<th>Platform</th>
+<th>Old</th>
+<th>New</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><p>Gaea</p></td>
+<td><p>2.35</p>
+<p>(1.19)</p></td>
+<td><p>1.60</p>
+<p>(1.74)</p></td>
+<td><p>1.46x</p></td>
+</tr>
+<tr class="even">
+<td><p>AMD</p></td>
+<td><p>3.13</p>
+<p>(0.89)</p></td>
+<td><p>1.66</p>
+<p>(1.66)</p></td>
+<td><p>1.89x</p></td>
+</tr>
+</tbody>
+</table>
+<p>Sustainable solution is to reduce size of <code>btstep()</code></p>
 </section>
 
 <section id="vertical-viscosity" class="title-slide slide level1">
@@ -1009,59 +1106,58 @@
 
 <section id="vertical-viscosity-1" class="title-slide slide level1">
 <h1>Vertical Viscosity</h1>
-<p>TODO: Remove <code>do_I(:)</code></p>
+<pre class=" numberLines" data-code="" data-start-line="1462
+
+" data-end-line="1489
+
+" data-line-numbers="1-27|23-27
+
+" data-startFrom="1462
+
+"><code>  do K=nz,2,-1 ; do i=is,ie
+    z2 = z_i(i,k)
+    botfn_2d(i,k) = 1.0 / (1.0 + 0.09*z2*z2*z2*z2*z2*z2)
+  enddo ; enddo ! i &amp; k loops
+
+  if (CS%bottomdraglaw) then
+    do K=nz,2,-1 ; do i=is,ie
+      Kv_tot(i,K) = Kv_tot(i,K) + (kv_bbl(i) - CS%Kv) * botfn_2d(i,k)
+      r = 0.5*(hvel(i,k) + hvel(i,k-1))
+      if (r &gt; bbl_thick(i)) then
+        h_shear_2d(i,k) = ((1.0 - botfn_2d(i,k)) * r + botfn_2d(i,k) * bbl_thick(i)) + h_neglect
+      else
+        h_shear_2d(i,k) = r + h_neglect
+      endif
+    enddo ; enddo ! i &amp; k loops
+  else
+    do K=nz,2,-1 ; do i=is,ie
+      Kv_tot(i,K) = Kv_tot(i,K) + (CS%Kvbbl - CS%Kv) * botfn_2d(i,k)
+      h_shear_2d(i,k) = 0.5 * (hvel(i,k) + hvel(i,k-1) + h_neglect)
+    enddo ; enddo ! i &amp; k loops
+  endif
+
+  do K=nz,2,-1 ; do i=is,ie
+    ! Calculate the coupling coefficients from the viscosities.
+    a_cpl(i,K) = i_mask(i) * Kv_tot(i,K) &amp;
+        / (h_shear_2d(i,k) * GV%H_to_Z + I_amax * Kv_tot(i,K))
+  enddo ; enddo ! i &amp; k loops
+</code></pre>
+</section>
+
+<section id="maintain-pipelines" class="title-slide slide level1">
+<h1>Maintain Pipelines</h1>
+<p><img data-src="img/stay_on_target.gif" style="width:50.0%" alt="image" /></p>
+<p>Keep going, even on land!</p>
 </section>
 
 <section id="vertical-viscosity-speedup" class="title-slide slide level1">
 <h1>Vertical Viscosity "speedup"</h1>
-<dl>
-<dt>Platform GFLOP/s Time</dt>
-<dd><p>Old New Old New</p>
-</dd>
-</dl>
-<p>Gaea</p>
-<dl>
-<dt>AMD Ryzen 5 1.29 2.00 1.54 1.50</dt>
-<dd><p>2.50 5.72 0.82 0.68</p>
-</dd>
-</dl>
-</section>
-
-<section id="barotropic-optimization" class="title-slide slide level1">
-<h1>Barotropic Optimization</h1>
-<pre class=""><code>LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(1491,26)
-   remark #15389: vectorization support: reference eta_wtd(i,j) has unaligned access   [ ../      ../ac/../src/core/MOM_barotropic.F90(1492,7) ]
-   remark #15381: vectorization support: unaligned access used inside loop body
-   remark #15305: vectorization support: vector length 2
-   remark #15399: vectorization support: unroll factor set to 2
-   remark #15309: vectorization support: normalized vectorization overhead 0.300
-   remark #15300: LOOP WAS VECTORIZED
-   remark #15451: unmasked unaligned unit stride stores: 1
-   remark #15475: --- begin vector cost summary ---
-   remark #15476: scalar cost: 4
-   remark #15477: vector cost: 2.500
-   remark #15478: estimated potential speedup: 1.450
-   remark #15488: --- end vector cost summary ---
-   remark #25015: Estimate of max trip count of loop=3
-LOOP END</code></pre>
-</section>
-
-<section id="barotropic-optimization..." class="title-slide slide level1">
-<h1>Barotropic Optimization...?</h1>
-<pre class=""><code>LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(2383,39)
-   remark #25460: No loop optimizations reported
-LOOP END</code></pre>
-<pre class=""><code>remark #25464: Some optimizations were skipped to constrain compile
-   time. Consider overriding limits (-qoverride-limits).</code></pre>
-</section>
-
-<section id="barotropic-speedup" class="title-slide slide level1">
-<h1>Barotropic Speedup</h1>
-<p>Override limits!</p>
 <table>
 <thead>
 <tr class="header">
-<th>Platform</th>
+<th>Subroutine</th>
+<th>Old</th>
+<th>New</th>
 <th>Old</th>
 <th>New</th>
 <th>Speedup</th>
@@ -1069,80 +1165,138 @@ LOOP END</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td><p>Gaea</p></td>
-<td><p>2.35</p>
-<p>(1.19)</p></td>
-<td><p>1.60</p>
-<p>(1.74)</p></td>
-<td><p>1.46x</p></td>
+<td>vertvisc_coef</td>
+<td>1.29</td>
+<td>2.00</td>
+<td>1.54</td>
+<td>1.50</td>
+<td>😐</td>
 </tr>
 <tr class="even">
-<td><p>Ryzen 5</p></td>
-<td><p>3.13</p>
-<p>(0.89)</p></td>
-<td><p>1.66</p>
-<p>(1.66)</p></td>
-<td><p>1.89x</p></td>
+<td>find_coupling_coef</td>
+<td>2.50</td>
+<td>5.72</td>
+<td>0.82</td>
+<td>0.68</td>
+<td>1.21x</td>
 </tr>
 </tbody>
 </table>
-<p>Sustainable solution is to reduce size of <code>btstep()</code></p>
 </section>
 
-<section id="barotropic-loop-order" class="title-slide slide level1">
-<h1>Barotropic Loop Order</h1>
-<ul>
-<li>ijk -&gt; kij vectorization</li>
-</ul>
-<p>(Work in progress!!!)</p>
+<section id="why-is-eos-so-efficient" class="title-slide slide level1">
+<h1>Why is EOS so efficient?</h1>
+<pre class=" numberLines" data-code="" data-start-line="578
+
+" data-end-line="619
+
+" data-startFrom="578
+
+"><code>  if (present(inty_dpa)) then ; do J=Jsq,Jeq ; do i=is,ie
+    ! hWght is the distance measure by which the cell is violation of
+    ! hydrostatic consistency. For large hWght we bias the interpolation of
+    ! T &amp; S along the top and bottom integrals, akin to thickness weighting.
+    hWght = 0.0
+    if (do_massWeight) &amp;
+      hWght = max(0., -bathyT(i,j)-z_t(i,j+1), -bathyT(i,j+1)-z_t(i,j))
+    if (hWght &gt; 0.) then
+      hL = (z_t(i,j) - z_b(i,j)) + dz_neglect
+      hR = (z_t(i,j+1) - z_b(i,j+1)) + dz_neglect
+      hWght = hWght * ( (hL-hR)/(hL+hR) )**2
+      iDenom = 1.0 / ( hWght*(hR + hL) + hL*hR )
+      hWt_LL = (hWght*hL + hR*hL) * iDenom ; hWt_LR = (hWght*hR) * iDenom
+      hWt_RR = (hWght*hR + hR*hL) * iDenom ; hWt_RL = (hWght*hL) * iDenom
+    else
+      hWt_LL = 1.0 ; hWt_LR = 0.0 ; hWt_RR = 1.0 ; hWt_RL = 0.0
+    endif
+
+    intz(1) = dpa(i,j) ; intz(5) = dpa(i,j+1)
+    do m=2,4
+      wt_L = 0.25*real(5-m) ; wt_R = 1.0-wt_L
+      wtT_L = wt_L*hWt_LL + wt_R*hWt_RL ; wtT_R = wt_L*hWt_LR + wt_R*hWt_RR
+
+      al0 = wtT_L*al0_2d(i,j) + wtT_R*al0_2d(i,j+1)
+      p0 = wtT_L*p0_2d(i,j) + wtT_R*p0_2d(i,j+1)
+      lambda = wtT_L*lambda_2d(i,j) + wtT_R*lambda_2d(i,j+1)
+
+      dz = wt_L*(z_t(i,j) - z_b(i,j)) + wt_R*(z_t(i,j+1) - z_b(i,j+1))
+      p_ave = -0.5*GxRho*(wt_L*(z_t(i,j)+z_b(i,j)) + &amp;
+                          wt_R*(z_t(i,j+1)+z_b(i,j+1)))
+
+      I_al0 = 1.0 / al0
+      I_Lzz = 1.0 / (p0 + (lambda * I_al0) + p_ave)
+      eps = 0.5*GxRho*dz*I_Lzz ; eps2 = eps*eps
+
+      intz(m) = Pa_to_RL2_T2 * ( g_Earth*dz*((p0 + p_ave)*(I_Lzz*I_al0) - rho_ref_mks) - 2.0*eps * &amp;
+                I_Rho * (lambda * I_al0**2) * eps2 * (C1_3 + eps2*(0.2 + eps2*(C1_7 + C1_9*eps2))) )
+    enddo
+    ! Use Boole&#39;s rule to integrate the values.
+    inty_dpa(i,j) = C1_90*(7.0*(intz(1)+intz(5)) + 32.0*(intz(2)+intz(4)) + 12.0*intz(3))
+  enddo ; enddo ; endif
+</code></pre>
+<p>High <em>arithmetic intensity</em>: many ops per memory access</p>
 </section>
 
-<section id="mystery-problems" class="title-slide slide level1">
-<h1>Mystery Problems</h1>
+<section>
+<section id="gaea-speedup" class="title-slide slide level1">
+<h1>Gaea Speedup</h1>
+<p><img data-src="img/subroutine_speedup_gaea.svg" alt="image" /></p>
+</section>
+<section id="amd-speedup" class="slide level2">
+<h2>AMD Speedup</h2>
+<p><img data-src="img/subroutine_speedup.svg" alt="image" /></p>
+</section></section>
+<section id="other-topics" class="title-slide slide level1">
+<h1>Other topics</h1>
 <ul>
-<li>MOM_hor_visc and the stack</li>
-<li></li>
+<li>Index reorder (ijk -&gt; kij)</li>
+<li>Stack issues? (Declaration reorder)</li>
+<li>Expression speedup</li>
 </ul>
 </section>
 
-<section id="hierarchy-of-performance" class="title-slide slide level1">
-<h1>Hierarchy of Performance</h1>
+<section>
+<section id="moving-forward" class="title-slide slide level1">
+<h1>Moving Forward</h1>
+<p>Development guidelines:</p>
 <ul>
-<li><p>Enable vectorization</p>
-<ul>
-<li class="fragment">Break large loops into smaller loops</li>
-<li class="fragment">No conditionals in loops</li>
-</ul></li>
-</ul>
-<ul>
-<li><p>Reduce memory-per-loop</p>
-<ul>
-<li class="fragment"><code>z[:] = a * x[:] + b * y[:]</code> should ideally fit in L1</li>
-<li class="fragment">Loop should be pulling the next L2-&gt;L1 update during this loop</li>
-<li class="fragment">Eliminate RAM-bound operations (~2GFLOP/s)</li>
-</ul></li>
-<li><p>Reduce memory access</p>
-<ul>
-<li class="fragment">i.e. increase arithmetic intensity</li>
-<li class="fragment">Avoid deep out-of-order memory access</li>
-</ul></li>
-<li><p>Align arrays</p>
-<ul>
-<li>In C, use posix_memalign, not malloc</li>
-<li>Actually very difficult in Fortran!</li>
-<li>Avoid "peel loops", i.e. overcommit your arrays</li>
-</ul></li>
-<li><p>Think about algorithm</p>
-<ul>
-<li>No rules here, just avoid redundant work</li>
-</ul></li>
-<li><p>Software Engineering matters!</p>
-<ul>
+<li>Profile and identify hotspots</li>
+<li>Enable vectorization</li>
+<li>Avoid if-blocks in loops</li>
+<li>Keep references close together</li>
+<li>Reduce memory access</li>
 <li>Keep functions small (&lt;2000 lines?)</li>
-<li>Keep stack variables small (&lt; L2? L3?)</li>
-</ul></li>
 </ul>
 </section>
+<section id="things-we-havent-talked-about" class="slide level2">
+<h2>Things we haven't talked about</h2>
+<ul>
+<li>Array alignment and peel loops</li>
+<li>Heap vs Stack (incl. alignment)</li>
+<li>Pipelining</li>
+<li>Arithmetic Intensity</li>
+</ul>
+</section>
+<section id="more-things-we-havent-talked-about" class="slide level2">
+<h2>More things we haven't talked about</h2>
+<p>Multicore/node jobs</p>
+<ul>
+<li>Clock speed throttling</li>
+<li>Sharing the RAM bandwidth + NUMA</li>
+<li>perf on MPI jobs</li>
+</ul>
+</section></section>
+<section>
+<section id="whence-gpus" class="title-slide slide level1">
+<h1>Whence GPUs?</h1>
+<p>One core vs 1 GPU process</p>
+<p><img data-src="img/p1_gpu_flops.svg" alt="image" /></p>
+</section>
+<section id="whence-gpus-1" class="slide level2">
+<h2>Whence GPUs?</h2>
+<p>6 cores vs 6 GPU procs</p>
+<p><img data-src="img/p6_gpu_flops.svg" alt="image" /></p>
+</section></section>
     </div>
   </div>
 

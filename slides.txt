@@ -51,26 +51,26 @@ CPU Scaling
 MOM5 scaling in ACCESS-OM2
 
 
-Fluid Dynamics Scaling
-----------------------
-
-Tension between local (hyperbolic) solvers
-
-.. math::
-
-   \frac{\partial \mathbf{u}}{\partial t}
-      &= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
-
-and global (elliptic) solvers
-
-.. math::
-
-   \nabla^2 p
-      &= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
-         + \nabla \cdot \mathbf{F} \\
-      &\approx \nabla \cdot \mathbf{F} \text{(?)} \\
-
-... unless you can cheat (aka oceanography)
+.. Fluid Dynamics Scaling
+   ----------------------
+   
+   Tension between local (hyperbolic) solvers
+   
+   .. math::
+   
+      \frac{\partial \mathbf{u}}{\partial t}
+         &= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
+   
+   and global (elliptic) solvers
+   
+   .. math::
+   
+      \nabla^2 p
+         &= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
+            + \nabla \cdot \mathbf{F} \\
+         &\approx \nabla \cdot \mathbf{F} \text{(?)} \\
+   
+   ... unless you can cheat (aka oceanography)
 
 
 Clock Speed
@@ -97,12 +97,6 @@ Clock Speed
    * => increase f to balance P
 
    After 2005, thermal leakage led to P >> A
-
-
-Clock Speed vs # of Cores
--------------------------
-
-Using more cores further reduces clock speed!
 
 
 Vectorization
@@ -153,6 +147,19 @@ Intel normalization
    Showing the normalization of Intel-based architectures.
 
 
+How to improve performance?
+===========================
+
+CPU scaling
+   Viable but CFL-limited
+
+Clock speed
+   Unchanged for >15 years
+
+Vectorization
+   Potential speedup?
+
+
 Vector Instructions
 ===================
 
@@ -161,8 +168,8 @@ Vector Instructions
 ======   ==========  =======  ===========
 Instr.   Size        GFLOP/s  Obs. (Gaea)
 ======   ==========  =======  ===========
-SSE      4 SP/2 DP   14.4     14.394
-AVX      8 SP/4 DP   28.8     28.790
+SSE      2 doubles   7.2      7.196
+AVX      4 doubles   14.4     14.395
 ======   ==========  =======  ===========
 
 .. Gaea C4 (Xeon E5-2697 v4, "Broadwell")
@@ -173,18 +180,18 @@ AVX      8 SP/4 DP   28.8     28.790
 Fused-Multiply Add
 ==================
 
-FMA: :math:`d \leftarrow a \times b + c`
+:math:`d \leftarrow a \times b + c`
 
 ======   ==========  =======  =======
 Instr.   Op          GFLOP/s  Obs.
 ======   ==========  =======  =======
-SSE      Add         14.4     14.394
+SSE      Add         7.2      7.196
 
-         FMA         28.8     28.790
+         FMA         14.4     14.394
 
-AVX      Add         28.8     28.788
+AVX      Add         14.4     14.395
 
-         FMA         57.6     57.580
+         FMA         28.8     28.788
 ======   ==========  =======  =======
 
 :math:`\text{rd}(\text{rd}(a \times b) + c)`
@@ -204,64 +211,75 @@ Concurrency
 Peak
 ====
 
-
 ======   ==========  =======  =======
 Instr.   Op          GFLOP/s  Obs.
 ======   ==========  =======  =======
-SSE      Add         14.4     14.394
+SSE      Add         7.2      7.196
 
-         FMA         28.8     28.790
+         FMA         14.4     14.394
 
-         2x FMA      57.6     57.580
+         2x FMA      28.8     28.788
 
-AVX      Add         28.8     28.788
+AVX      Add         14.4     14.395
 
-         Add+Mul     57.6     57.580
+         Add+Mul     28.8     28.788
 
-         FMA         57.6     57.580
+         FMA         28.8     28.788
 
-         2x FMA      115.2    115.160
+         2x FMA      57.6     57.576
 ======   ==========  =======  =======
 
  
-Array Ops
-=========
+Array Performance
+=================
+
+.. image:: img/gaea_dp_flops.svg
+
+
+AMD Arrays
+----------
+
+.. image:: img/zen3_dp_flops.svg
+
+   
+Single Precision
+----------------
 
 .. image:: img/gaea_flops.svg
 
 
-Array Ops
-=========
+Array Cacheing
+==============
 
-.. image:: img/gaea_flops_cached.svg
+.. image:: img/gaea_dp_flops_cached.svg
 
 
-Arrays @ AMD
+AMD Cacheing
+------------
+
+.. image:: img/zen3_dp_flops_cached.svg
+
+
+Memory-bound
 ============
 
-.. image:: img/zen3_flops.svg
+.. image:: img/gaea_dp_flops_membnd.svg
 
 
-Arrays @ AMD
-============
+Peak Array Ops
+--------------
 
-.. image:: img/zen3_flops_cached.svg
-
-
-Arithmetic Intensity
-====================
-
-======================  ===================  ===========
-Expression              AI                   Max GFLOP/s
-======================  ===================  ===========
-y[:] = a x[:]           :math:`\frac{1}{4}`  26.43
-y[:] = x[:] + x[:]      :math:`\frac{1}{4}`  24.98
-y[:] = x[:] + y[:]      :math:`\frac{1}{8}`  18.34
-y[:] = a x[:] + y[:]    :math:`\frac{1}{4}`  37.58
-y[:] = a x[:] + b y[:]  :math:`\frac{3}{8}`  51.08
-y[:] = x[1:] - x[:-1]   :math:`\frac{1}{8}`  14.07
-y[:] = x[8:] - x[:-8]   :math:`\frac{1}{8}`  18.39
-======================  ===================  ===========
+======================  ====  ====  ====  ====
+Expression              Max   L2    L3    DRAM
+======================  ====  ====  ====  ====
+y[:] = a x[:]           11.1  3.5   1.8   0.7
+y[:] = x[:] + x[:]      12.3  3.6   1.8   0.7
+y[:] = x[:] + y[:]      9.3   3.5   1.8   0.7
+y[:] = a x[:] + y[:]    18.3  7.0   3.6   1.4
+y[:] = a x[:] + b y[:]  23.9  10.6  5.5   2.0
+y[:] = x[1:] - x[:-1]   7.0   3.4   1.8   0.7
+y[:] = x[8:] - x[:-8]   9.3   3.5   1.8   0.7
+======================  ====  ====  ====  ====
 
 
 MOM6 sample config
@@ -273,7 +291,8 @@ MOM6 sample config
 
 * 32 × 32 grid, 75 level
 
-   - ~76k / field
+   - ~76k / field (~:math:`2^{16}`)
+   - :math:`2^{10}` per level
 
 * 288 steps (3 day, :math:`\Delta t = 900s`)
 
@@ -281,13 +300,13 @@ MOM6 sample config
 
    - Split barotropic
 
-   - Biharmonic visc
+   - Smagorinsky biharmonic
 
-   - Thickness diffusivity
+   - Thermo, Wright EOS
 
-   - Bounded Coriolis
+   - Bounded Coriolis terms
 
-   - ??
+   - Layered (no ALE)
 
 
 Profiling with perf
@@ -311,10 +330,26 @@ perf stat
    :code:
 
 
-MOM6 FLOP rates
-===============
+Profile Overview
+================
 
-.. image:: img/subroutine_share.svg
+.. image:: img/subroutine_profile.svg
+
+(NOTE: AMD timings)
+
+
+Investigation Targets
+=====================
+
+* Horizontal viscosity
+
+* Coriolis force advection (``coradcalc``)
+
+* Barotropic solver (``btstep``)
+
+* Vertical viscosity (``find_coupling_coef``)
+
+* EOS (``int_density_dz_wright``)
 
 
 Horizontal Viscosity
@@ -365,20 +400,26 @@ vmaxsd   Serial max
 ======   ===================
 
 
+Hor Visc Update
+===============
+
+TODO
+
+
 Hor Visc Speedup
 =====================
 
-============   ======   ======   =======
-Platform       Old      New      Speedup
-============   ======   ======   =======
-Gaea C4        2.23s    1.27s    1.75x
+==========  ======   ======   =======
+Platform    Old      New      Speedup
+==========  ======   ======   =======
+Gaea C4     2.23s    1.27s    1.75x
 
-               (1.67)   (2.93)   
+            (1.67)   (2.93)   
 
-Ryzen 5 2600   1.69s    1.01s    1.67x
+AMD @ home  1.69s    1.01s    1.67x
 
-               (2.30)   (3.76)   
-============   ======   ======   =======
+            (2.30)   (3.76)   
+==========  ======   ======   =======
 
 
 Coriolis advection
@@ -406,46 +447,17 @@ Coriolis advection
 Coriolis Speedup
 ================
 
+========    ======   ======   =======
+Platform    Old      New      Speedup
+========    ======   ======   =======
+Gaea        1.06     0.87     1.23x
 
-===========    ======   ======   =======
-Platform       Old      New      Speedup
-===========    ======   ======   =======
-Gaea           1.06     0.87     1.23x
+            (2.79)   (3.43)   
 
-               (2.79)   (3.43)   
+AMD         1.11     0.64     1.74x
 
-AMD Ryzen 5    1.11     0.64     1.74x
-
-               (2.68)   (5.21)   
-===========    ======   ======   =======
-
-
-Vertical Viscosity
-==================
-
-.. include:: src/MOM_vert_friction.F90
-   :code:
-   :start-line: 1248
-   :end-line: 1270
-   :number-lines: 1248
-   :data-line-numbers: 1-23|1|23
-
-
-Vertical Viscosity
-==================
-
-TODO: Remove ``do_I(:)``
-
-
-Vertical Viscosity "speedup"
-============================
-
-Platform       GFLOP/s         Time
-               Old   New      Old   New
-Gaea
-
-AMD Ryzen 5    1.29  2.00     1.54  1.50
-               2.50  5.72     0.82  0.68
+            (2.68)   (5.21)   
+========    ======   ======   =======
 
 
 Barotropic Optimization
@@ -470,7 +482,6 @@ Barotropic Optimization
    LOOP END
 
 
-
 Barotropic Optimization...?
 ===========================
 
@@ -489,77 +500,150 @@ Barotropic Optimization...?
 Barotropic Speedup
 ==================
 
-Override limits!
+Engage the Override!
 
-===========    ======   ======   =======
-Platform       Old      New      Speedup
-===========    ======   ======   =======
-Gaea           2.35     1.60     1.46x
+========    ======   ======   =======
+Platform    Old      New      Speedup
+========    ======   ======   =======
+Gaea        2.35     1.60     1.46x
 
-               (1.19)   (1.74)
+            (1.19)   (1.74)
 
-Ryzen 5        3.13     1.66     1.89x
+AMD         3.13     1.66     1.89x
 
-               (0.89)   (1.66)
-===========    ======   ======   =======
+            (0.89)   (1.66)
+========    ======   ======   =======
 
 Sustainable solution is to reduce size of ``btstep()``
 
 
-Barotropic Loop Order
-=====================
+Vertical Viscosity
+==================
 
-* ijk -> kij vectorization
-
-(Work in progress!!!)
-
-
-Mystery Problems
-================
-
-* MOM_hor_visc and the stack
-*
+.. include:: src/MOM_vert_friction.F90
+   :code:
+   :start-line: 1248
+   :end-line: 1270
+   :number-lines: 1248
+   :data-line-numbers: 1-23|1|23
 
 
-Hierarchy of Performance
+Vertical Viscosity
+==================
+
+.. include:: src/MOM_vert_friction_vec.F90
+   :code:
+   :start-line: 1462
+   :end-line: 1489
+   :number-lines: 1462
+   :data-line-numbers: 1-27|23-27
+
+
+Maintain Pipelines
+==================
+
+.. image:: img/stay_on_target.gif
+   :width: 50%
+
+Keep going, even on land!
+
+
+Vertical Viscosity "speedup"
+============================
+
+==================   ======   ======   ======   ======   =======
+Subroutine           Old      New      Old      New      Speedup
+==================   ======   ======   ======   ======   =======
+vertvisc_coef        1.29     2.00     1.54     1.50     😐
+find_coupling_coef   2.50     5.72     0.82     0.68     1.21x
+==================   ======   ======   ======   ======   =======
+
+
+Why is EOS so efficient?
 ========================
+
+.. include:: src/MOM_EOS_Wright.F90
+   :code:
+   :start-line: 578
+   :end-line: 619
+   :number-lines: 578
+
+High *arithmetic intensity*: many ops per memory access
+
+
+Gaea Speedup 
+============
+
+.. image:: img/subroutine_speedup_gaea.svg
+
+
+AMD Speedup
+-----------
+
+.. image:: img/subroutine_speedup.svg
+
+
+Other topics
+============
+
+* Index reorder (ijk -> kij)
+* Stack issues?  (Declaration reorder)
+* Expression speedup
+
+
+Moving Forward
+==============
+
+Development guidelines:
+
+* Profile and identify hotspots
 
 * Enable vectorization
 
-   * Break large loops into smaller loops
+* Avoid if-blocks in loops
 
-   * No conditionals in loops
-   
-..  This sets up the pipeline: Repeat yourself as much as possible
-
-* Reduce memory-per-loop
-
-   * ``z[:] = a * x[:] + b * y[:]`` should ideally fit in L1
-
-   * Loop should be pulling the next L2->L1 update during this loop
-
-   * Eliminate RAM-bound operations (~2GFLOP/s)
+* Keep references close together
 
 * Reduce memory access
 
-   * i.e. increase arithmetic intensity
+* Keep functions small (<2000 lines?)
 
-   * Avoid deep out-of-order memory access
 
-* Align arrays
+Things we haven't talked about
+------------------------------
 
-  * In C, use posix_memalign, not malloc
+* Array alignment and peel loops
 
-  * Actually very difficult in Fortran!
+* Heap vs Stack (incl. alignment)
 
-  * Avoid "peel loops", i.e. overcommit your arrays
+* Pipelining
 
-* Think about algorithm
+* Arithmetic Intensity
 
-  * No rules here, just avoid redundant work
 
-* Software Engineering matters!
+More things we haven't talked about
+-----------------------------------
 
-  * Keep functions small (<2000 lines?)
+Multicore/node jobs
 
-  * Keep stack variables small (< L2? L3?)
+* Clock speed throttling
+
+* Sharing the RAM bandwidth + NUMA
+
+* perf on MPI jobs
+
+
+Whence GPUs?
+============
+
+One core vs 1 GPU process
+
+.. image:: img/p1_gpu_flops.svg
+
+
+Whence GPUs?
+------------
+
+6 cores vs 6 GPU procs
+
+.. image:: img/p6_gpu_flops.svg
