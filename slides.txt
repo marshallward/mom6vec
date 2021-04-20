@@ -333,9 +333,13 @@ perf stat
 Profile Overview
 ================
 
-.. image:: img/subroutine_profile.svg
+.. image:: img/subroutine_profile_gaea.svg
 
-(NOTE: AMD timings)
+
+AMD Profile
+-----------
+
+.. image:: img/subroutine_profile.svg
 
 
 Investigation Targets
