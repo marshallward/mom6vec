@@ -173,3 +173,4 @@ subroutine horizontal_viscosity(u, v, h, diffu, diffv, MEKE, VarMix, G, GV, US, 
   real, dimension(SZI_(G),SZJB_(G)) :: &
     hf_diffv_2d, &    ! Depth sum of hf_diffu, hf_diffv [L T-2 ~> m s-2]
     intz_diffv_2d     ! Depth-integral of diffv [L2 T-2 ~> m2 s-2]
+

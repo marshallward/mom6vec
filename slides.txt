@@ -233,7 +233,7 @@ AVX      Add         14.4     14.395
          2x FMA      57.6     57.576
 ======   ==========  =======  =======
 
- 
+
 Array Performance
 =================
 
@@ -271,8 +271,8 @@ AMD Arrays
         and maybe newer Intels do this?
 
    * Otherwise the same one you're RAM bound
-   
-      
+
+
 Single Precision
 ----------------
 
@@ -500,11 +500,11 @@ Platform    Old      New      Speedup
 ==========  ======   ======   =======
 Gaea C4     2.23s    1.27s    1.75x
 
-            (1.67)   (2.93)   
+            (1.67)   (2.93)
 
 AMD @ home  1.69s    1.01s    1.67x
 
-            (2.30)   (3.76)   
+            (2.30)   (3.76)
 ==========  ======   ======   =======
 
 
@@ -538,11 +538,11 @@ Platform    Old      New      Speedup
 ========    ======   ======   =======
 Gaea        1.06     0.87     1.23x
 
-            (2.79)   (3.43)   
+            (2.79)   (3.43)
 
 AMD         1.11     0.64     1.74x
 
-            (2.68)   (5.21)   
+            (2.68)   (5.21)
 ========    ======   ======   =======
 
 
@@ -652,7 +652,7 @@ Vertical Viscosity speedup?
 FLOPs are up!
 
 ==================   ====   ====
-Subroutine           Old    New 
+Subroutine           Old    New
 ==================   ====   ====
 vertvisc_coef        1.29   2.00
 find_coupling_coef   2.50   5.72
@@ -694,7 +694,7 @@ What about that EOS?
 High *arithmetic intensity*: many ops per memory access
 
 
-Gaea Speedup 
+Gaea Speedup
 ============
 
 .. image:: img/subroutine_speedup_gaea.svg
@@ -762,6 +762,10 @@ Multicore/node jobs
 * perf on MPI jobs
 
 
+Apocrypha
+=========
+
+
 Whence GPUs?
 ============
 
@@ -780,17 +784,57 @@ Whence GPUs?
    :width: 60%
 
 
-Apocrypha
-=========
+Barotropic index reorder
+========================
 
-.. btstep index reorder
-   --------------------
-   
-   TODO?
+Lots of layered sums, e.g.
+
+.. code:: fortran
+
+   do j=js,je
+      do k=1,nz
+         do I=Isq,Ieq
+            BT_force_u(I,j) = BT_force_u(I,j) &
+                  + wt_u(I,j,k) * bc_accel_u(I,j,k)
+         enddo
+      enddo
+   enddo
+
+Very non-contiguous!  Stay on target!
+
+Reorder to (k,i,j)
+
+
+Barotropic kij Speedup
+----------------------
+
+.. image:: img/subroutine_speedup_bt.svg
+
+
+Reordering problems
+-------------------
+
+1. Answer changes:
+
+   .. math::
+
+      (u_1 + u_2 + u_3 + u_4) + (u_5 + u_6 + u_7 + u_8) + ...
+
+2. Transpose needed outside of loops!  Very slow...
+
+   .. code:: fortran
+
+      do k=1,nz
+        u_tr(k,:,:) = u(:,:,k)
+        v_tr(k,:,:) = v(:,:,k)
+        ! ...
+      enddo
+
+Work in progress...
 
 
 Ops per cycle
--------------
+=============
 
 This is slow::
 
@@ -809,7 +853,7 @@ But changes answers...
 
 
 Heap vs Stack
--------------
+=============
 
 Stack
    Local memory created by the function
@@ -823,14 +867,14 @@ Stack memory can be *aligned* for better performance.
 
 
 Excessive Stack?
-----------------
+================
 
 ``horizontal_viscosity`` has 18 3D arrays on stack!  And over 2x as many 2D
 arrays...
 
 .. include:: src/MOM_hor_visc_decl.F90
    :code: fortran
+   :start-line: 1
+   :number-lines: 578
 
 Moving declarations will slow model!  This is worrying...
-
-

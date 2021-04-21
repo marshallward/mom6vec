@@ -1703,6 +1703,11 @@ LOOP END</code></pre>
 <li>perf on MPI jobs</li>
 </ul>
 </section></section>
+<section id="apocrypha" class="title-slide slide level1">
+<h1>Apocrypha</h1>
+
+</section>
+
 <section>
 <section id="whence-gpus" class="title-slide slide level1">
 <h1>Whence GPUs?</h1>
@@ -1715,12 +1720,40 @@ LOOP END</code></pre>
 <p><img data-src="img/p6_gpu_flops.svg" style="width:60.0%" alt="image" /></p>
 </section></section>
 <section>
-<section id="apocrypha" class="title-slide slide level1">
-<h1>Apocrypha</h1>
-
+<section id="barotropic-index-reorder" class="title-slide slide level1">
+<h1>Barotropic index reorder</h1>
+<p>Lots of layered sums, e.g.</p>
+<pre class="fortran"><code>do j=js,je
+   do k=1,nz
+      do I=Isq,Ieq
+         BT_force_u(I,j) = BT_force_u(I,j) &amp;
+               + wt_u(I,j,k) * bc_accel_u(I,j,k)
+      enddo
+   enddo
+enddo</code></pre>
+<p>Very non-contiguous! Stay on target!</p>
+<p>Reorder to (k,i,j)</p>
 </section>
-<section id="ops-per-cycle" class="slide level2">
-<h2>Ops per cycle</h2>
+<section id="barotropic-kij-speedup" class="slide level2">
+<h2>Barotropic kij Speedup</h2>
+<p><img data-src="img/subroutine_speedup_bt.svg" alt="image" /></p>
+</section>
+<section id="reordering-problems" class="slide level2">
+<h2>Reordering problems</h2>
+<ol type="1">
+<li><p>Answer changes:</p>
+<p><span class="math display">\[(u_1 + u_2 + u_3 + u_4) + (u_5 + u_6 + u_7 + u_8) + ...\]</span></p></li>
+<li><p>Transpose needed outside of loops! Very slow...</p>
+<pre class="fortran"><code>do k=1,nz
+  u_tr(k,:,:) = u(:,:,k)
+  v_tr(k,:,:) = v(:,:,k)
+  ! ...
+enddo</code></pre></li>
+</ol>
+<p>Work in progress...</p>
+</section></section>
+<section id="ops-per-cycle" class="title-slide slide level1">
+<h1>Ops per cycle</h1>
 <p>This is slow:</p>
 <pre><code>botfn_2d(i,k) = 1.0 / (1.0 + 0.09*z2*z2*z2*z2*z2*z2)</code></pre>
 <p>This is faster:</p>
@@ -1732,8 +1765,9 @@ botfn_2d(i,k) = 1.0 / (1.0 + 0.09 * (z2_sq * z2_sq * z2_sq))</code></pre>
 </ol>
 <p>But changes answers...</p>
 </section>
-<section id="heap-vs-stack" class="slide level2">
-<h2>Heap vs Stack</h2>
+
+<section id="heap-vs-stack" class="title-slide slide level1">
+<h1>Heap vs Stack</h1>
 <dl>
 <dt>Stack</dt>
 <dd><p>Local memory created by the function</p>
@@ -1745,10 +1779,15 @@ botfn_2d(i,k) = 1.0 / (1.0 + 0.09 * (z2_sq * z2_sq * z2_sq))</code></pre>
 <p>Compilers cannot manipulate heap memory, must work around ambiguity.</p>
 <p>Stack memory can be <em>aligned</em> for better performance.</p>
 </section>
-<section id="excessive-stack-1" class="slide level2">
-<h2>Excessive Stack?</h2>
+
+<section id="excessive-stack-1" class="title-slide slide level1">
+<h1>Excessive Stack?</h1>
 <p><code>horizontal_viscosity</code> has 18 3D arrays on stack! And over 2x as many 2D arrays...</p>
-<pre class="fortran" data-code="fortran
+<pre class="fortran numberLines" data-code="fortran
+
+"><code data-start-line="1
+
+" data-startFrom="578
 
 ">subroutine horizontal_viscosity(u, v, h, diffu, diffv, MEKE, VarMix, G, GV, US, &amp;
                                 CS, OBC, BT, TD, ADp)
@@ -1925,9 +1964,10 @@ botfn_2d(i,k) = 1.0 / (1.0 + 0.09 * (z2_sq * z2_sq * z2_sq))</code></pre>
   real, dimension(SZI_(G),SZJB_(G)) :: &amp;
     hf_diffv_2d, &amp;    ! Depth sum of hf_diffu, hf_diffv [L T-2 ~&gt; m s-2]
     intz_diffv_2d     ! Depth-integral of diffv [L2 T-2 ~&gt; m2 s-2]
+
 </code></pre>
 <p>Moving declarations will slow model! This is worrying...</p>
-</section></section>
+</section>
     </div>
   </div>
 
