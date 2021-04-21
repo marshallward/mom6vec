@@ -29,6 +29,8 @@ reveal.js/css/theme/gfdl.css: gfdl.css
 
 index.html: slides.txt gfdl.revealjs reveal.js/css/theme/gfdl.css $(DOTFIGURES) $(SOURCE)
 	pandoc ${FLAGS} $< -o $@
+	sed -i 's/^" data-start-line=/"><code data-start-line=/g' index.html
+	sed -i 's/^"><code>/">/g' index.html
 
 img/%.svg: dot/%.dot
 	dot -Tsvg $^ > $@

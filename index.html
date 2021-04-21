@@ -529,7 +529,7 @@
 <h1>Horizontal Viscosity</h1>
 <pre class="fortran numberLines" data-code="fortran
 
-" data-start-line="831
+"><code data-start-line="831
 
 " data-end-line="958
 
@@ -537,7 +537,7 @@
 
 " data-startFrom="831
 
-"><code>    do j=Jsq,Jeq+1 ; do i=Isq,Ieq+1
+">    do j=Jsq,Jeq+1 ; do i=Isq,Ieq+1
       if ((CS%Smagorinsky_Kh) .or. (CS%Smagorinsky_Ah)) then
         Shear_mag = sqrt(sh_xx(i,j)*sh_xx(i,j) + &amp;
           0.25*((sh_xy(I-1,J-1)*sh_xy(I-1,J-1) + sh_xy(I,J)*sh_xy(I,J)) + &amp;
@@ -718,15 +718,15 @@
 <h1>Vectorized HorVisc</h1>
 <pre class="fortran numberLines" data-code="fortran
 
-" data-start-line="854
+"><code data-start-line="854
 
 " data-end-line="1128
 
-" data-line-numbers="1-10|12-23|
+" data-line-numbers="1-10|12-23|28-32|225-231
 
 " data-startFrom="831
 
-"><code>    if ((CS%Smagorinsky_Kh) .or. (CS%Smagorinsky_Ah)) then
+">    if ((CS%Smagorinsky_Kh) .or. (CS%Smagorinsky_Ah)) then
       do j=Jsq,Jeq+1 ; do i=Isq,Ieq+1
         sh_xx_sq = sh_xx(i,j) * sh_xx(i,j)
         sh_xy_sq = 0.25 * ( &amp;
@@ -1043,7 +1043,7 @@
 <h1>Coriolis advection</h1>
 <pre class="fortran numberLines" data-code="fortran
 
-" data-start-line="424
+"><code data-start-line="424
 
 " data-end-line="686
 
@@ -1051,7 +1051,7 @@
 
 " data-startFrom="424
 
-"><code>    do J=Jsq-1,Jeq+1 ; do I=Isq-1,Ieq+1
+">    do J=Jsq-1,Jeq+1 ; do I=Isq-1,Ieq+1
       if (CS%no_slip ) then
         relative_vorticity = (2.0-G%mask2dBu(I,J)) * (dvdx(I,J) - dudy(I,J)) * G%IareaBu(I,J)
       else
@@ -1320,7 +1320,7 @@
 <h1>Coriolis advection</h1>
 <pre class="fortran numberLines" data-code="fortran
 
-" data-start-line="669
+"><code data-start-line="669
 
 " data-end-line="694
 
@@ -1328,7 +1328,7 @@
 
 " data-startFrom="669
 
-"><code>    ! Add in the additonal terms with Arakawa &amp; Lamb.
+">    ! Add in the additonal terms with Arakawa &amp; Lamb.
     if ((CS%Coriolis_Scheme == ARAKAWA_LAMB81) .or. &amp;
         (CS%Coriolis_Scheme == AL_BLEND)) then ; do j=js,je ; do I=Isq,Ieq
       CAu(I,j,k) = CAu(I,j,k) + &amp;
@@ -1454,15 +1454,15 @@ LOOP END</code></pre>
 <h1>Vertical Viscosity</h1>
 <pre class="fortran numberLines" data-code="fortran
 
-" data-start-line="1248
+"><code data-start-line="1248
 
 " data-end-line="1270
 
-" data-line-numbers="1-23|1|23
+" data-line-numbers="1-22|1|22
 
 " data-startFrom="1248
 
-"><code>  do K=nz,2,-1 ; do i=is,ie ; if (do_i(i)) then
+">  do K=nz,2,-1 ; do i=is,ie ; if (do_i(i)) then
     !    botfn determines when a point is within the influence of the bottom
     !  boundary layer, going from 1 at the bottom to 0 in the interior.
     z2 = z_i(i,k)
@@ -1494,15 +1494,15 @@ LOOP END</code></pre>
 <h1>Vertical Viscosity</h1>
 <pre class="fortran numberLines" data-code="fortran
 
-" data-start-line="1462
+"><code data-start-line="1462
 
 " data-end-line="1489
 
-" data-line-numbers="1-27|23-27
+" data-line-numbers="1-4|23-27
 
 " data-startFrom="1462
 
-"><code>  do K=nz,2,-1 ; do i=is,ie
+">  do K=nz,2,-1 ; do i=is,ie
     z2 = z_i(i,k)
     botfn_2d(i,k) = 1.0 / (1.0 + 0.09*z2*z2*z2*z2*z2*z2)
   enddo ; enddo ! i &amp; k loops
@@ -1531,7 +1531,7 @@ LOOP END</code></pre>
   enddo ; enddo ! i &amp; k loops
 </code></pre>
 <aside class="notes">
-<p>So we remove them, then multiply by a zero-mask at the end.</p>
+<p>So we remove them, then multiply by i_mask when writing a_cpl.</p>
 <p>This lets us keep moving contiguously though memory, and set up an uninterrupted pipeline.</p>
 </aside>
 </section>
@@ -1543,13 +1543,38 @@ LOOP END</code></pre>
 </section>
 
 <section id="vertical-viscosity-speedup" class="title-slide slide level1">
-<h1>Vertical Viscosity "speedup"</h1>
+<h1>Vertical Viscosity speedup?</h1>
+<p>FLOPs are up!</p>
 <table>
 <thead>
 <tr class="header">
 <th>Subroutine</th>
 <th>Old</th>
 <th>New</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>vertvisc_coef</td>
+<td>1.29</td>
+<td>2.00</td>
+</tr>
+<tr class="even">
+<td>find_coupling_coef</td>
+<td>2.50</td>
+<td>5.72</td>
+</tr>
+</tbody>
+</table>
+</section>
+
+<section id="vertical-viscosity-speedup-1" class="title-slide slide level1">
+<h1>Vertical Viscosity "speedup"</h1>
+<p>Runtimes, not quite as exciting.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Subroutine</th>
 <th>Old</th>
 <th>New</th>
 <th>Speedup</th>
@@ -1558,18 +1583,14 @@ LOOP END</code></pre>
 <tbody>
 <tr class="odd">
 <td>vertvisc_coef</td>
-<td>1.29</td>
-<td>2.00</td>
-<td>1.54</td>
-<td>1.50</td>
+<td>1.54s</td>
+<td>1.50s</td>
 <td>😐</td>
 </tr>
 <tr class="even">
 <td>find_coupling_coef</td>
-<td>2.50</td>
-<td>5.72</td>
-<td>0.82</td>
-<td>0.68</td>
+<td>0.82s</td>
+<td>0.68s</td>
 <td>1.21x</td>
 </tr>
 </tbody>
@@ -1581,17 +1602,17 @@ LOOP END</code></pre>
 </aside>
 </section>
 
-<section id="why-is-eos-so-efficient" class="title-slide slide level1">
-<h1>Why is EOS so efficient?</h1>
+<section id="what-about-that-eos" class="title-slide slide level1">
+<h1>What about that EOS?</h1>
 <pre class="fortran numberLines" data-code="fortran
 
-" data-start-line="578
+"><code data-start-line="578
 
 " data-end-line="619
 
 " data-startFrom="578
 
-"><code>  if (present(inty_dpa)) then ; do J=Jsq,Jeq ; do i=is,ie
+">  if (present(inty_dpa)) then ; do J=Jsq,Jeq ; do i=is,ie
     ! hWght is the distance measure by which the cell is violation of
     ! hydrostatic consistency. For large hWght we bias the interpolation of
     ! T &amp; S along the top and bottom integrals, akin to thickness weighting.
@@ -1698,10 +1719,6 @@ LOOP END</code></pre>
 <h1>Apocrypha</h1>
 
 </section>
-<section id="btstep-index-reorder" class="slide level2">
-<h2>btstep index reorder</h2>
-<p>TODO?</p>
-</section>
 <section id="ops-per-cycle" class="slide level2">
 <h2>Ops per cycle</h2>
 <p>This is slow:</p>
@@ -1713,6 +1730,7 @@ botfn_2d(i,k) = 1.0 / (1.0 + 0.09 * (z2_sq * z2_sq * z2_sq))</code></pre>
 <li>Fewer operations (3 vs 5 mults)</li>
 <li>Fewer instructions: Two can be pipelined!</li>
 </ol>
+<p>But changes answers...</p>
 </section>
 <section id="heap-vs-stack" class="slide level2">
 <h2>Heap vs Stack</h2>
@@ -1732,7 +1750,7 @@ botfn_2d(i,k) = 1.0 / (1.0 + 0.09 * (z2_sq * z2_sq * z2_sq))</code></pre>
 <p><code>horizontal_viscosity</code> has 18 3D arrays on stack! And over 2x as many 2D arrays...</p>
 <pre class="fortran" data-code="fortran
 
-"><code>subroutine horizontal_viscosity(u, v, h, diffu, diffv, MEKE, VarMix, G, GV, US, &amp;
+">subroutine horizontal_viscosity(u, v, h, diffu, diffv, MEKE, VarMix, G, GV, US, &amp;
                                 CS, OBC, BT, TD, ADp)
   type(ocean_grid_type),         intent(in)  :: G      !&lt; The ocean&#39;s grid structure.
   type(verticalGrid_type),       intent(in)  :: GV     !&lt; The ocean&#39;s vertical grid structure.
