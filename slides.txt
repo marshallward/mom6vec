@@ -343,7 +343,6 @@ AMD Profile
 
 .. image:: img/subroutine_profile.svg
 
-
    * btstep takes a bigger hit on AMD
 
    * EOS is a bit slower but still dominant
@@ -369,7 +368,7 @@ Horizontal Viscosity
 ====================
 
 .. include:: src/MOM_hor_visc.F90
-   :code:
+   :code: fortran
    :start-line: 831
    :end-line: 958
    :number-lines: 831
@@ -413,10 +412,19 @@ vmaxsd   Serial max
 ======   ===================
 
 
-Hor Visc Update
-===============
+Vectorized Horizontal Viscosity
+===============================
 
-TODO
+.. include:: src/MOM_hor_visc_vec.F90
+   :code: fortran
+   :start-line: 854
+   :end-line: 1128
+   :number-lines: 831
+   :data-line-numbers: 1-10|12-23|
+
+1. Promote repeated scalars to 2d arrays
+
+2. Move if-blocks outside loops
 
 
 Hor Visc Speedup
@@ -439,7 +447,7 @@ Coriolis advection
 ==================
 
 .. include:: src/MOM_CoriolisAdv.F90
-   :code:
+   :code: fortran
    :start-line: 424
    :end-line: 686
    :number-lines: 424
@@ -450,7 +458,7 @@ Coriolis advection
 ==================
 
 .. include:: src/MOM_CoriolisAdv_vec.F90
-   :code:
+   :code: fortran
    :start-line: 669
    :end-line: 694
    :number-lines: 669
@@ -534,7 +542,7 @@ Vertical Viscosity
 ==================
 
 .. include:: src/MOM_vert_friction.F90
-   :code:
+   :code: fortran
    :start-line: 1248
    :end-line: 1270
    :number-lines: 1248
@@ -545,7 +553,7 @@ Vertical Viscosity
 ==================
 
 .. include:: src/MOM_vert_friction_vec.F90
-   :code:
+   :code: fortran
    :start-line: 1462
    :end-line: 1489
    :number-lines: 1462
@@ -558,7 +566,7 @@ Maintain Pipelines
 .. image:: img/stay_on_target.gif
    :width: 50%
 
-Keep going, even on land!
+Don't stop, keep going, even over land!
 
 
 Vertical Viscosity "speedup"
@@ -576,7 +584,7 @@ Why is EOS so efficient?
 ========================
 
 .. include:: src/MOM_EOS_Wright.F90
-   :code:
+   :code: fortran
    :start-line: 578
    :end-line: 619
    :number-lines: 578
@@ -600,8 +608,6 @@ Other topics
 ============
 
 * Index reorder (ijk -> kij)
-* Stack issues?  (Declaration reorder)
-* Expression speedup
 
 
 Moving Forward
@@ -652,6 +658,7 @@ Whence GPUs?
 One core vs 1 GPU process
 
 .. image:: img/p1_gpu_flops.svg
+   :width: 60%
 
 
 Whence GPUs?
@@ -660,3 +667,53 @@ Whence GPUs?
 6 cores vs 6 GPU procs
 
 .. image:: img/p6_gpu_flops.svg
+   :width: 60%
+
+
+Apocrypha
+=========
+
+
+Ops per cycle
+-------------
+
+This is slow::
+
+   botfn_2d(i,k) = 1.0 / (1.0 + 0.09*z2*z2*z2*z2*z2*z2)
+
+This is faster::
+
+   z2_sq = z2 * z2
+   botfn_2d(i,k) = 1.0 / (1.0 + 0.09 * (z2_sq * z2_sq * z2_sq))
+
+1. Fewer operations (3 vs 5 mults)
+
+2. Fewer instructions: Two can be pipelined!
+
+
+Heap vs Stack
+-------------
+
+Stack
+   Local memory created by the function
+
+Heap
+   External global memory, `allocate()`
+
+Compilers cannot manipulate heap memory, must work around ambiguity.
+
+Stack memory can be *aligned* for better performance.
+
+
+Excessive Stack?
+----------------
+
+``horizontal_viscosity`` has 18 3D arrays on stack!  And over 2x as many 2D
+arrays...
+
+.. include:: src/MOM_hor_visc_decl.F90
+   :code: fortran
+
+Moving declarations will slow model!  This is worrying...
+
+
