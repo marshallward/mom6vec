@@ -159,9 +159,11 @@ AVX      4 doubles   14.4     14.395
 
 .. notes::
 
-   Gaea C4 (Xeon E5-2697 v4, 'Broadwell")
+   * Doube precision!  Not single.
 
-   :math:`f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}`
+   * Gaea C4 (Xeon E5-2697 v4, 'Broadwell')
+
+   * :math:`f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}`
 
 
 Fused-Multiply Add
@@ -201,6 +203,14 @@ Concurrency
 
 2 instr. per cycle, even FMA
 
+.. notes::
+
+   * Modern CPUs can execute more than one instruction per cycle.
+
+   * Broadwells can do two adds, muls, or FMAs at a time
+
+   * Non-arithmetic stuff like loop increments are usually concurrent
+
 
 Peak
 ====
@@ -229,13 +239,40 @@ Array Performance
 
 .. image:: img/gaea_dp_flops.svg
 
+.. notes::
+
+   * Loops of simple array updates are shown here.
+
+   * No assembly, this is in C and the compiler is autovectorizing.
+
+   Lots of detail here, but main points
+
+   * For small arrays, there is a lot of diversity in performance.
+     Not going to get into that!
+
+   * As arrays get larger two things happen:
+
+      * Performance drops like a stone in steps
+
+      * Most results collapse onto the lowest curve
+
 
 AMD Arrays
 ----------
 
 .. image:: img/zen3_dp_flops.svg
 
+   This was a surprising result to me, and I am just giving you my
+   interpretation here.  I have not yet read any specs explaining this.
+
+   * There is no "drop" in levels!  L1-L3 is about the same
+
+      * This is presumably better cache management.  Could be a Zen 3 thing,
+        and maybe newer Intels do this?
+
+   * Otherwise the same one you're RAM bound
    
+      
 Single Precision
 ----------------
 
@@ -247,6 +284,11 @@ Array Cacheing
 
 .. image:: img/gaea_dp_flops_cached.svg
 
+.. notes::
+
+   * Cache hierarchy explains the regimes of performance
+
+   * Each line indicates the array length of exactly two arrays in the cache.
 
 AMD Cacheing
 ------------
@@ -258,6 +300,12 @@ Memory-bound
 ============
 
 .. image:: img/gaea_dp_flops_membnd.svg
+
+.. notes::
+
+   More detail of the point made earlier.
+
+   See next slide for the actual numbers:
 
 
 Peak Array Ops
@@ -302,6 +350,15 @@ MOM6 sample config
 
   - Layered (no ALE)
 
+.. notes::
+
+   * Not necessarily the most physically signficant factors.  Just the ones
+     which had a significant impact on performance.
+
+   * Also note that this domain has a nontrivial land mask.
+
+     This will be useful later for testing masked array loops.
+
 
 Profiling with perf
 ===================
@@ -331,17 +388,25 @@ Profile Overview
 
 .. notes::
 
+   * Hopefully not too confusing... %runtime and FLOPS together, even same axis
+
    * Speeds are on order of 1-2 GFLOP/s
 
    * Places most results in DRAM or L3 bound
 
    * EOS is doing quite well at >10 GFLOP/s
 
+   * Also note the "long tail" in the top 50 functions.. there are no easy wins
+     here, it will take a lot of improvements over a lot of functions to see
+     any major speedups.
+
 
 AMD Profile
 -----------
 
 .. image:: img/subroutine_profile.svg
+
+.. notes::
 
    * btstep takes a bigger hit on AMD
 
@@ -548,6 +613,11 @@ Vertical Viscosity
    :number-lines: 1248
    :data-line-numbers: 1-23|1|23
 
+.. notes::
+
+   The ``do_I(:)`` arrays are used to skip over land.  These can impede
+   vectorization.
+
 
 Vertical Viscosity
 ==================
@@ -559,12 +629,19 @@ Vertical Viscosity
    :number-lines: 1462
    :data-line-numbers: 1-27|23-27
 
+.. notes::
+
+   So we remove them, then multiply by a zero-mask at the end.
+
+   This lets us keep moving contiguously though memory, and set up an
+   uninterrupted pipeline.
+
 
 Maintain Pipelines
 ==================
 
 .. image:: img/stay_on_target.gif
-   :width: 50%
+   :width: 45%
 
 Don't stop, keep going, even over land!
 
@@ -578,6 +655,16 @@ Subroutine           Old      New      Old      New      Speedup
 vertvisc_coef        1.29     2.00     1.54     1.50     😐
 find_coupling_coef   2.50     5.72     0.82     0.68     1.21x
 ==================   ======   ======   ======   ======   =======
+
+.. notes::
+
+   Though to tell the truth... the results were less than impressive.
+
+   In practice, this could end up being better or worse, depending on the
+   amount of land.
+
+   Which is why I haven't submitted this change.  But it is interesting an
+   worth revisiting soon.
 
 
 Why is EOS so efficient?
@@ -597,17 +684,25 @@ Gaea Speedup
 
 .. image:: img/subroutine_speedup_gaea.svg
 
+.. notes::
+
+   So several subroutines had significant speedup, maybe about 2x in some
+   cases, a fair bit less in others.
+
+   Total improvement was maybe ~10%
+
+   But the long tail was always going to make it a long fight to get any
+   speedup.  The real goal here was to lay down the rules to maintain efficient
+   code.
+
+   In that sense, I think this project has been useful and ought to yield more
+   improvements in the future.
+
 
 AMD Speedup
 -----------
 
 .. image:: img/subroutine_speedup.svg
-
-
-Other topics
-============
-
-* Index reorder (ijk -> kij)
 
 
 Moving Forward
@@ -672,6 +767,11 @@ Whence GPUs?
 
 Apocrypha
 =========
+
+btstep index reorder
+--------------------
+
+TODO?
 
 
 Ops per cycle

@@ -210,8 +210,11 @@
 </tbody>
 </table>
 <aside class="notes">
-<p>Gaea C4 (Xeon E5-2697 v4, 'Broadwell")</p>
-<p><span class="math inline">\(f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}\)</span></p>
+<ul>
+<li>Doube precision! Not single.</li>
+<li>Gaea C4 (Xeon E5-2697 v4, 'Broadwell')</li>
+<li><span class="math inline">\(f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}\)</span></li>
+</ul>
 </aside>
 </section>
 
@@ -262,6 +265,13 @@
 <h1>Concurrency</h1>
 <p><img data-src="img/broadwell_exc.svg" alt="image" /></p>
 <p>2 instr. per cycle, even FMA</p>
+<aside class="notes">
+<ul>
+<li>Modern CPUs can execute more than one instruction per cycle.</li>
+<li>Broadwells can do two adds, muls, or FMAs at a time</li>
+<li>Non-arithmetic stuff like loop increments are usually concurrent</li>
+</ul>
+</aside>
 </section>
 
 <section id="peak" class="title-slide slide level1">
@@ -311,6 +321,21 @@
 <section id="array-performance" class="title-slide slide level1">
 <h1>Array Performance</h1>
 <p><img data-src="img/gaea_dp_flops.svg" alt="image" /></p>
+<aside class="notes">
+<ul>
+<li>Loops of simple array updates are shown here.</li>
+<li>No assembly, this is in C and the compiler is autovectorizing.</li>
+</ul>
+<p>Lots of detail here, but main points</p>
+<ul>
+<li><p>For small arrays, there is a lot of diversity in performance. Not going to get into that!</p></li>
+<li><p>As arrays get larger two things happen:</p>
+<ul>
+<li class="fragment">Performance drops like a stone in steps</li>
+<li class="fragment">Most results collapse onto the lowest curve</li>
+</ul></li>
+</ul>
+</aside>
 </section>
 <section id="amd-arrays" class="slide level2">
 <h2>AMD Arrays</h2>
@@ -324,6 +349,12 @@
 <section id="array-cacheing" class="title-slide slide level1">
 <h1>Array Cacheing</h1>
 <p><img data-src="img/gaea_dp_flops_cached.svg" alt="image" /></p>
+<aside class="notes">
+<ul>
+<li>Cache hierarchy explains the regimes of performance</li>
+<li>Each line indicates the array length of exactly two arrays in the cache.</li>
+</ul>
+</aside>
 </section>
 <section id="amd-cacheing" class="slide level2">
 <h2>AMD Cacheing</h2>
@@ -333,6 +364,10 @@
 <section id="memory-bound" class="title-slide slide level1">
 <h1>Memory-bound</h1>
 <p><img data-src="img/gaea_dp_flops_membnd.svg" alt="image" /></p>
+<aside class="notes">
+<p>More detail of the point made earlier.</p>
+<p>See next slide for the actual numbers:</p>
+</aside>
 </section>
 <section id="peak-array-ops" class="slide level2">
 <h2>Peak Array Ops</h2>
@@ -418,6 +453,13 @@
 <li>Layered (no ALE)</li>
 </ul></li>
 </ul>
+<aside class="notes">
+<ul>
+<li><p>Not necessarily the most physically signficant factors. Just the ones which had a significant impact on performance.</p></li>
+<li><p>Also note that this domain has a nontrivial land mask.</p>
+<p>This will be useful later for testing masked array loops.</p></li>
+</ul>
+</aside>
 </section>
 
 <section id="profiling-with-perf" class="title-slide slide level1">
@@ -453,15 +495,24 @@
 <p><img data-src="img/subroutine_profile_gaea.svg" alt="image" /></p>
 <aside class="notes">
 <ul>
+<li>Hopefully not too confusing... %runtime and FLOPS together, even same axis</li>
 <li>Speeds are on order of 1-2 GFLOP/s</li>
 <li>Places most results in DRAM or L3 bound</li>
 <li>EOS is doing quite well at &gt;10 GFLOP/s</li>
+<li>Also note the "long tail" in the top 50 functions.. there are no easy wins here, it will take a lot of improvements over a lot of functions to see any major speedups.</li>
 </ul>
 </aside>
 </section>
 <section id="amd-profile" class="slide level2">
 <h2>AMD Profile</h2>
 <p><img data-src="img/subroutine_profile.svg" alt="image" /></p>
+<aside class="notes">
+<ul>
+<li>btstep takes a bigger hit on AMD</li>
+<li>EOS is a bit slower but still dominant</li>
+<li>Speeds are a bit higher, reflecting better L2/L3 performance</li>
+</ul>
+</aside>
 </section></section>
 <section id="investigation-targets" class="title-slide slide level1">
 <h1>Investigation Targets</h1>
@@ -1434,6 +1485,9 @@ LOOP END</code></pre>
     a_cpl(i,K) = Kv_tot(i,K) / (h_shear*GV%H_to_Z + I_amax*Kv_tot(i,K))
   endif ; enddo ; enddo ! i &amp; k loops
 </code></pre>
+<aside class="notes">
+<p>The <code>do_I(:)</code> arrays are used to skip over land. These can impede vectorization.</p>
+</aside>
 </section>
 
 <section id="vertical-viscosity-1" class="title-slide slide level1">
@@ -1476,11 +1530,15 @@ LOOP END</code></pre>
         / (h_shear_2d(i,k) * GV%H_to_Z + I_amax * Kv_tot(i,K))
   enddo ; enddo ! i &amp; k loops
 </code></pre>
+<aside class="notes">
+<p>So we remove them, then multiply by a zero-mask at the end.</p>
+<p>This lets us keep moving contiguously though memory, and set up an uninterrupted pipeline.</p>
+</aside>
 </section>
 
 <section id="maintain-pipelines" class="title-slide slide level1">
 <h1>Maintain Pipelines</h1>
-<p><img data-src="img/stay_on_target.gif" style="width:50.0%" alt="image" /></p>
+<p><img data-src="img/stay_on_target.gif" style="width:45.0%" alt="image" /></p>
 <p>Don't stop, keep going, even over land!</p>
 </section>
 
@@ -1516,6 +1574,11 @@ LOOP END</code></pre>
 </tr>
 </tbody>
 </table>
+<aside class="notes">
+<p>Though to tell the truth... the results were less than impressive.</p>
+<p>In practice, this could end up being better or worse, depending on the amount of land.</p>
+<p>Which is why I haven't submitted this change. But it is interesting an worth revisiting soon.</p>
+</aside>
 </section>
 
 <section id="why-is-eos-so-efficient" class="title-slide slide level1">
@@ -1577,18 +1640,17 @@ LOOP END</code></pre>
 <section id="gaea-speedup" class="title-slide slide level1">
 <h1>Gaea Speedup</h1>
 <p><img data-src="img/subroutine_speedup_gaea.svg" alt="image" /></p>
+<aside class="notes">
+<p>So several subroutines had significant speedup, maybe about 2x in some cases, a fair bit less in others.</p>
+<p>Total improvement was maybe ~10%</p>
+<p>But the long tail was always going to make it a long fight to get any speedup. The real goal here was to lay down the rules to maintain efficient code.</p>
+<p>In that sense, I think this project has been useful and ought to yield more improvements in the future.</p>
+</aside>
 </section>
 <section id="amd-speedup" class="slide level2">
 <h2>AMD Speedup</h2>
 <p><img data-src="img/subroutine_speedup.svg" alt="image" /></p>
 </section></section>
-<section id="other-topics" class="title-slide slide level1">
-<h1>Other topics</h1>
-<ul>
-<li>Index reorder (ijk -&gt; kij)</li>
-</ul>
-</section>
-
 <section>
 <section id="moving-forward" class="title-slide slide level1">
 <h1>Moving Forward</h1>
@@ -1635,6 +1697,10 @@ LOOP END</code></pre>
 <section id="apocrypha" class="title-slide slide level1">
 <h1>Apocrypha</h1>
 
+</section>
+<section id="btstep-index-reorder" class="slide level2">
+<h2>btstep index reorder</h2>
+<p>TODO?</p>
 </section>
 <section id="ops-per-cycle" class="slide level2">
 <h2>Ops per cycle</h2>
