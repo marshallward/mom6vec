@@ -106,7 +106,7 @@ $if(date)$
 $endif$
   <!-- Currently cannot add notes to a title slide, so have to do manually-->
   <aside class="notes">
-    $intro$
+    $preface$
   </aside>
 </section>
 $endif$

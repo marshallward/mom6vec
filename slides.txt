@@ -7,7 +7,24 @@ The Vectorization of MOM6
 :date: 2021-04-21
 :url: https://marshallward.org/ogrp2021/index.html
 :preface:
-   Introductory comments, written to slide notes
+   * some of the more recent work investigating MOM6 performance
+
+   * Specifically efforts to improve the vectorization of the code
+
+   * First half will try to put performance in a bit of context
+
+      * What is "fast"?  What is "fastest"?
+
+      * What is realistic?
+
+      * How should MOM6 look compared to these metrics?
+
+   * Next will go through areas we've been able to improve
+
+   * Final bit is open ended, I have more content to share but only if time and
+     interest
+
+   * Questions are fine at any time, no urgent need to reach the end here.
 
 
 Peak Performance
