@@ -285,8 +285,8 @@ MOM6 sample config
 
 * 32 × 32 grid, 75 level
 
-   - ~76k / field (~:math:`2^{16}`)
-   - :math:`2^{10}` per level
+  - ~76k / field (~:math:`2^{16}`)
+  - :math:`2^{10}` per level
 
 * 288 steps (3 day, :math:`\Delta t = 900s`)
 
