@@ -92,9 +92,12 @@
 </tbody>
 </table>
 <aside class="notes">
-<p>This is a form of the so-called "iron law" of peak performance.</p>
-<p>It is normally written as an expression of time, rather than rate of work, but I think this inverse form is better suited for this discussion.</p>
-<p>The "work" here is written as the number of FLOPs (or floating point operations) per second, but it could be generalized to other units computational work.</p>
+<ul>
+<li>"Iron law" of computing</li>
+<li>Usually written as time, but inverse form is better for us.</li>
+<li>"Work" here is floating point ops per second.</li>
+<li>Just like real work, they are not necessarily all useful.</li>
+</ul>
 <p>The first two terms are very straightforward: N is the number of CPUs and f is the clock rate, or cycles per second. More CPUs and faster clock rate means more work.</p>
 <p>The third term here is more interesting, and is the focus here. This represents the ability of the CPU to do concurrent work on a single core.</p>
 </aside>
@@ -104,22 +107,36 @@
 <h1>CPU Scaling</h1>
 <p><img data-src="img/scaling_ocn.svg" alt="image" /></p>
 <p>MOM5 scaling in ACCESS-OM2</p>
+<aside class="notes">
+<ul>
+<li>I arguably made a career out of producing plots like the one shown here.</li>
+<li>CPU scaling has become traditional source of improvement, but it has its limits.</li>
+<li>Ocean models are uniquely suited to scaling due to locality</li>
+<li>Runtimes for MOM5 in the ACCESS-OM2 coupled model are shown.</li>
+<li>Left figure shows that the model is scaleable across resolutions, but tens to taper off at ~0.1 sec/step.</li>
+<li>0.1deg hit the machine limit (well, limit I was allowed to use, at least)</li>
+<li>Probably would not have hit 0.1s but might have gotten closer.</li>
+<li>HOWEVER, right hand side shows that the work per step was still going up and up, even if time per step was not.</li>
+<li>As resolutions drop, CFL means more work per step!</li>
+<li>If dt/step is capped, and steps are getting smaller, is this really sustainable?</li>
+</ul>
+</aside>
 </section>
 
 <section id="clock-speed" class="title-slide slide level1">
 <h1>Clock Speed</h1>
 <p><img data-src="img/clockspeed.svg" style="width:70.0%" alt="image" /></p>
 <aside class="notes">
-<p>This is a plot of CPU clock speeds from CPUDB. The database goes from about 1970 to 2014, but the situation has not changed much since then.</p>
-<p>The trend is clear: Clock speed increased exponentially until about 2005. After that, it flattened out around 3GHz. After that, people stopped talking much about clock speeds.</p>
-<p>This is a reflection of Moore's law (transistor rate) but is better explained by the breakdown of Dennard scaling.</p>
 <ul>
-<li>P ~ f</li>
-<li>P/A ~ const</li>
-<li>transitor density drops exponentially =&gt; power drops too</li>
-<li>=&gt; increase f to balance P</li>
+<li><p>Clock speed is the former traditional source of improvement.</p></li>
+<li><p>But clock speed hasn't really changed since ~2006.</p></li>
+<li><p>This is from CPUDB which stops at 2014, but situation has not really changed.</p></li>
+<li><p>Dennard scaling (constant power per area) presented a feasible path to improvement:</p>
+<ul>
+<li class="fragment">Shrink area, raise f, and power consumption stays the same</li>
+</ul></li>
+<li><p>Until 2006 and we're back to nowhere.</p></li>
 </ul>
-<p>After 2005, thermal leakage led to P &gt;&gt; A</p>
 </aside>
 </section>
 
@@ -129,20 +146,18 @@
 <p><img data-src="img/specfp.svg" alt="image" /></p>
 <aside class="notes">
 <p>:</p>
-<p>Main comments:</p>
 <ul>
 <li><p>Despite the end of clock speed increase, FP rates continue to rise</p></li>
-<li><p>But after ~2004, the rate definitely drops. What causes it?</p></li>
+<li><p>This is the SPECfp benchmark, it's a bit of a mash of various FP codes, but does include some Fortran models.</p>
+<ul>
+<li class="fragment">This is actually a composite of four SPECfp benchmarks, normalized across Intel CPUs.</li>
+</ul></li>
+<li><p>Main point: despite halt of CPU speeds (denoted by dash) FP performance did continuee to rise, albeit more slowly.</p></li>
 <li><p>Less important: What happened in the 90s?</p>
-<p>This was the era of high-end vector CPUs (DEC, SPARC, etc). As they failed to keep up with commodity x86 chips, they left the market.</p></li>
-<li><p>Even less important: The "blob" at the end is emergence of mobile chips?</p></li>
+<ul>
+<li class="fragment">All the DEC, SPARC, etc vector CPUs. They failed to keep up with x86.</li>
+</ul></li>
 </ul>
-<p>What is SPECfp?</p>
-<p>This is a renormalized plot of the SPECfp scores over time.</p>
-<p>CPUs are assigned a "score" based on their performance of a suite of FP-based models. The number is somewhat arbitrary.</p>
-<p>Unfortunately they periodically change these tests and SPEC strongly discourages comparison across tests, but in the words of Jurgen Willebrand, no one can stop me!</p>
-<p>We roughly normalize along Intel trends, especially 95-&gt;2k, which is why the "high end" cloud permeates.</p>
-<p>Don't take these numbers too literally, especially my renormalization which I didn't properly calibrate.</p>
 </aside>
 </section>
 <section id="intel-normalization" class="slide level2">
@@ -194,6 +209,10 @@
 </tr>
 </tbody>
 </table>
+<aside class="notes">
+<p>Gaea C4 (Xeon E5-2697 v4, 'Broadwell")</p>
+<p><span class="math inline">\(f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}\)</span></p>
+</aside>
 </section>
 
 <section id="fused-multiply-add" class="title-slide slide level1">
@@ -230,6 +249,13 @@
 </tbody>
 </table>
 <p><span class="math inline">\(\text{rd}(\text{rd}(a \times b) + c)\)</span> vs <span class="math inline">\(\text{rd}(a \times b + c)\)</span></p>
+<aside class="notes">
+<ul>
+<li>FMAs gave a boost to certain types of computation, esp. matrix arithmetic.</li>
+<li>Also offer speedy dot products</li>
+<li>Note they <em>change answers</em>! Rounding rules are technically more accurate.</li>
+</ul>
+</aside>
 </section>
 
 <section id="concurrency" class="title-slide slide level1">
@@ -385,11 +411,11 @@
 <li><p>288 steps (3 day, <span class="math inline">\(\Delta t = 900s\)</span>)</p></li>
 <li><p>"Benchmark" configuration:</p>
 <ul>
-<li class="fragment">Split barotropic</li>
-<li class="fragment">Smagorinsky biharmonic</li>
-<li class="fragment">Thermo, Wright EOS</li>
-<li class="fragment">Bounded Coriolis terms</li>
-<li class="fragment">Layered (no ALE)</li>
+<li>Split barotropic</li>
+<li>Smagorinsky biharmonic</li>
+<li>Thermo, Wright EOS</li>
+<li>Bounded Coriolis terms</li>
+<li>Layered (no ALE)</li>
 </ul></li>
 </ul>
 </section>
@@ -425,6 +451,13 @@
 <section id="profile-overview" class="title-slide slide level1">
 <h1>Profile Overview</h1>
 <p><img data-src="img/subroutine_profile_gaea.svg" alt="image" /></p>
+<aside class="notes">
+<ul>
+<li>Speeds are on order of 1-2 GFLOP/s</li>
+<li>Places most results in DRAM or L3 bound</li>
+<li>EOS is doing quite well at &gt;10 GFLOP/s</li>
+</ul>
+</aside>
 </section>
 <section id="amd-profile" class="slide level2">
 <h2>AMD Profile</h2>

@@ -26,14 +26,13 @@ Peak Performance
 
 .. notes::
 
-   This is a form of the so-called "iron law" of peak performance.
+   * "Iron law" of computing
 
-   It is normally written as an expression of time, rather than rate of work,
-   but I think this inverse form is better suited for this discussion.
+   * Usually written as time, but inverse form is better for us.
 
-   The "work" here is written as the number of FLOPs (or floating point
-   operations) per second, but it could be generalized to other units
-   computational work.
+   * "Work" here is floating point ops per second.
+
+   * Just like real work, they are not necessarily all useful.
 
    The first two terms are very straightforward: N is the number of CPUs and f
    is the clock rate, or cycles per second.  More CPUs and faster clock rate
@@ -50,27 +49,31 @@ CPU Scaling
 
 MOM5 scaling in ACCESS-OM2
 
+.. notes::
 
-.. Fluid Dynamics Scaling
-   ----------------------
-   
-   Tension between local (hyperbolic) solvers
-   
-   .. math::
-   
-      \frac{\partial \mathbf{u}}{\partial t}
-         &= -\mathbf{u} \cdot \nabla \mathbf{u} - \nabla p + \mathbf{f} \\
-   
-   and global (elliptic) solvers
-   
-   .. math::
-   
-      \nabla^2 p
-         &= -\nabla \cdot \left( \mathbf{u} \cdot \nabla \mathbf{u} \right)
-            + \nabla \cdot \mathbf{F} \\
-         &\approx \nabla \cdot \mathbf{F} \text{(?)} \\
-   
-   ... unless you can cheat (aka oceanography)
+   * I arguably made a career out of producing plots like the one shown here.
+
+   * CPU scaling has become traditional source of improvement, but it has its
+     limits.
+
+   * Ocean models are uniquely suited to scaling due to locality
+
+   * Runtimes for MOM5 in the ACCESS-OM2 coupled model are shown.
+
+   * Left figure shows that the model is scaleable across resolutions, but tens
+     to taper off at ~0.1 sec/step.
+
+   * 0.1deg hit the machine limit (well, limit I was allowed to use, at least)
+
+   * Probably would not have hit 0.1s but might have gotten closer.
+
+   * HOWEVER, right hand side shows that the work per step was still going up
+     and up, even if time per step was not.
+
+   * As resolutions drop, CFL means more work per step!
+
+   * If dt/step is capped, and steps are getting smaller, is this really
+     sustainable?
 
 
 Clock Speed
@@ -81,22 +84,19 @@ Clock Speed
 
 .. notes::
 
-   This is a plot of CPU clock speeds from CPUDB.  The database goes from about
-   1970 to 2014, but the situation has not changed much since then.
+   * Clock speed is the former traditional source of improvement.
 
-   The trend is clear:  Clock speed increased exponentially until about 2005.
-   After that, it flattened out around 3GHz.  After that, people stopped
-   talking much about clock speeds.
+   * But clock speed hasn't really changed since ~2006.
 
-   This is a reflection of Moore's law (transistor rate) but is better
-   explained by the breakdown of Dennard scaling.
+   * This is from CPUDB which stops at 2014, but situation has not really
+     changed.
 
-   * P ~ f
-   * P/A ~ const
-   * transitor density drops exponentially => power drops too
-   * => increase f to balance P
+   * Dennard scaling (constant power per area) presented a feasible path to
+     improvement:
 
-   After 2005, thermal leakage led to P >> A
+      * Shrink area, raise f, and power consumption stays the same
+
+   * Until 2006 and we're back to nowhere.
 
 
 Vectorization
@@ -106,35 +106,20 @@ Vectorization
 
 .. notes:::
 
-   Main comments:
-
    * Despite the end of clock speed increase, FP rates continue to rise
 
-   * But after ~2004, the rate definitely drops.  What causes it?
+   * This is the SPECfp benchmark, it's a bit of a mash of various FP codes,
+     but does include some Fortran models.
+
+      * This is actually a composite of four SPECfp benchmarks, normalized
+        across Intel CPUs.
+
+   * Main point: despite halt of CPU speeds (denoted by dash) FP performance
+     did continuee to rise, albeit more slowly.
 
    * Less important: What happened in the 90s?
 
-     This was the era of high-end vector CPUs (DEC, SPARC, etc).
-     As they failed to keep up with commodity x86 chips, they left the market.
-
-   * Even less important: The "blob" at the end is emergence of mobile chips?
-
-   What is SPECfp?
-
-   This is a renormalized plot of the SPECfp scores over time.
-
-   CPUs are assigned a "score" based on their performance of a suite of
-   FP-based models.  The number is somewhat arbitrary.
-
-   Unfortunately they periodically change these tests and SPEC strongly
-   discourages comparison across tests, but in the words of Jurgen Willebrand,
-   no one can stop me!
-
-   We roughly normalize along Intel trends, especially 95->2k, which is why the
-   "high end" cloud permeates.
-
-   Don't take these numbers too literally, especially my renormalization which
-   I didn't properly calibrate.
+      * All the DEC, SPARC, etc vector CPUs.  They failed to keep up with x86.
 
 
 Intel normalization
@@ -172,9 +157,11 @@ SSE      2 doubles   7.2      7.196
 AVX      4 doubles   14.4     14.395
 ======   ==========  =======  ===========
 
-.. Gaea C4 (Xeon E5-2697 v4, "Broadwell")
+.. notes::
 
-.. :math:`f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}`
+   Gaea C4 (Xeon E5-2697 v4, 'Broadwell")
+
+   :math:`f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}`
 
 
 Fused-Multiply Add
@@ -197,6 +184,13 @@ AVX      Add         14.4     14.395
 :math:`\text{rd}(\text{rd}(a \times b) + c)`
 vs :math:`\text{rd}(a \times b + c)`
 
+.. notes::
+
+   * FMAs gave a boost to certain types of computation, esp. matrix arithmetic.
+
+   * Also offer speedy dot products
+
+   * Note they *change answers*!  Rounding rules are technically more accurate.
 
 
 Concurrency
@@ -298,15 +292,15 @@ MOM6 sample config
 
 * "Benchmark" configuration:
 
-   - Split barotropic
+  - Split barotropic
 
-   - Smagorinsky biharmonic
+  - Smagorinsky biharmonic
 
-   - Thermo, Wright EOS
+  - Thermo, Wright EOS
 
-   - Bounded Coriolis terms
+  - Bounded Coriolis terms
 
-   - Layered (no ALE)
+  - Layered (no ALE)
 
 
 Profiling with perf
@@ -335,11 +329,26 @@ Profile Overview
 
 .. image:: img/subroutine_profile_gaea.svg
 
+.. notes::
+
+   * Speeds are on order of 1-2 GFLOP/s
+
+   * Places most results in DRAM or L3 bound
+
+   * EOS is doing quite well at >10 GFLOP/s
+
 
 AMD Profile
 -----------
 
 .. image:: img/subroutine_profile.svg
+
+
+   * btstep takes a bigger hit on AMD
+
+   * EOS is a bit slower but still dominant
+
+   * Speeds are a bit higher, reflecting better L2/L3 performance
 
 
 Investigation Targets
