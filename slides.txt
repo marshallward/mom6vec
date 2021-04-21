@@ -5,7 +5,7 @@ The Vectorization of MOM6
 :author: Marshall Ward
 :description: Overview of recent efforts to vectorize MOM6
 :date: 2021-04-21
-:url: https://marshallward.org/ogrp2021.html
+:url: https://marshallward.org/ogrp2021/index.html
 :preface:
    Introductory comments, written to slide notes
 
