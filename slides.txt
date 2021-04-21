@@ -412,8 +412,8 @@ vmaxsd   Serial max
 ======   ===================
 
 
-Vectorized Horizontal Viscosity
-===============================
+Vectorized HorVisc
+==================
 
 .. include:: src/MOM_hor_visc_vec.F90
    :code: fortran
