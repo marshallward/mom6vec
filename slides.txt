@@ -5,7 +5,7 @@ The Vectorization of MOM6
 :author: Marshall Ward
 :description: Overview of recent efforts to vectorize MOM6
 :date: 2021-04-21
-:url: https://marshallward.org/ogrp2021/index.html
+:url: https://marshallward.org/mom6vec/index.html
 :preface:
    * some of the more recent work investigating MOM6 performance
 
@@ -176,7 +176,7 @@ AVX      4 doubles   14.4     14.395
 
 .. notes::
 
-   * Doube precision!  Not single.
+   * Double precision!  Not single.
 
    * Gaea C4 (Xeon E5-2697 v4, 'Broadwell')
 
@@ -229,8 +229,24 @@ Concurrency
    * Non-arithmetic stuff like loop increments are usually concurrent
 
 
-Peak
-====
+Peak GFLOPs
+===========
+
+==========  =======  =======
+Operation   GFLOP/s  Obs.
+==========  =======  =======
+Add         14.4     14.395
+
+Add+Mul     28.8     28.788
+
+FMA         28.8     28.788
+
+2x FMA      57.6     57.576
+==========  =======  =======
+
+
+Peak SSE and AVX
+----------------
 
 ======   ==========  =======  =======
 Instr.   Op          GFLOP/s  Obs.
@@ -323,6 +339,18 @@ Memory-bound
    More detail of the point made earlier.
 
    See next slide for the actual numbers:
+
+
+Peak Array Ops
+==============
+
+======================  ====  ====  ====  ====
+Expression              Max   L2    L3    DRAM
+======================  ====  ====  ====  ====
+y[:] = x[:] + y[:]      9.3   3.5   1.8   0.7
+y[:] = a x[:] + y[:]    18.3  7.0   3.6   1.4
+y[:] = a x[:] + b y[:]  23.9  10.6  5.5   2.0
+======================  ====  ====  ====  ====
 
 
 Peak Array Ops
@@ -512,17 +540,16 @@ Vectorized HorVisc
 Hor Visc Speedup
 =====================
 
-==========  ======   ======   =======
-Platform    Old      New      Speedup
-==========  ======   ======   =======
-Gaea C4     2.23s    1.27s    1.75x
+==========  =============  =======
+Platform    Runtime        Speedup
+==========  =============  =======
+Gaea C4     2.23s → 1.27s  1.75x
+AMD @ home  1.69s → 1.01s  1.67x
+==========  =============  =======
 
+.. GFLOP/s
             (1.67)   (2.93)
-
-AMD @ home  1.69s    1.01s    1.67x
-
             (2.30)   (3.76)
-==========  ======   ======   =======
 
 
 Coriolis advection
@@ -550,17 +577,16 @@ Coriolis advection
 Coriolis Speedup
 ================
 
-========    ======   ======   =======
-Platform    Old      New      Speedup
-========    ======   ======   =======
-Gaea        1.06     0.87     1.23x
+========    =============  =======
+Platform    Runtime        Speedup
+========    =============  =======
+Intel       1.06s → 0.87s  1.23x
+AMD         1.11s → 0.64s  1.74x
+========    =============  =======
 
+.. GFLOP/s
             (2.79)   (3.43)
-
-AMD         1.11     0.64     1.74x
-
             (2.68)   (5.21)
-========    ======   ======   =======
 
 
 Barotropic Optimization
@@ -569,7 +595,7 @@ Barotropic Optimization
 .. code::
 
    LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(1491,26)
-      remark #15389: vectorization support: reference eta_wtd(i,j) has unaligned access   [ ../      ../ac/../src/core/MOM_barotropic.F90(1492,7) ]
+      remark #15389: vectorization support: reference eta_wtd(i,j) has unaligned access   [ ../../ac/../src/core/MOM_barotropic.F90(1492,7) ]
       remark #15381: vectorization support: unaligned access used inside loop body
       remark #15305: vectorization support: vector length 2
       remark #15399: vectorization support: unroll factor set to 2
@@ -605,17 +631,16 @@ Barotropic Speedup
 
 Engage the Override!
 
-========    ======   ======   =======
-Platform    Old      New      Speedup
-========    ======   ======   =======
-Gaea        2.35     1.60     1.46x
+========    =============  =======
+Platform    Runtime        Speedup
+========    =============  =======
+Intel       2.35s → 1.60s  1.46x
+AMD         3.13s → 1.66s  1.89x
+========    =============  =======
 
+.. GLOP/s
             (1.19)   (1.74)
-
-AMD         3.13     1.66     1.89x
-
             (0.89)   (1.66)
-========    ======   ======   =======
 
 Sustainable solution is to reduce size of ``btstep()``
 
@@ -663,30 +688,31 @@ Maintain Pipelines
 Don't stop, keep going, even over land!
 
 
-Vertical Viscosity speedup?
-===========================
+Vertical Viscosity GFLOP/s
+==========================
+
+==================   ===========
+Subroutine           GFLOP/s
+==================   ===========
+vertvisc_coef        1.29 → 2.00
+find_coupling_coef   2.50 → 5.72
+==================   ===========
 
 FLOPs are up!
-
-==================   ====   ====
-Subroutine           Old    New
-==================   ====   ====
-vertvisc_coef        1.29   2.00
-find_coupling_coef   2.50   5.72
-==================   ====   ====
 
 
 Vertical Viscosity "speedup"
 ============================
 
-Runtimes, not quite as exciting.
+==================   =============  =======
+Subroutine           Runtime        Speedup
+==================   =============  =======
+vertvisc_coef        1.54s → 1.50s  😐
+find_coupling_coef   0.82s → 0.68s  1.21x
+==================   =============  =======
 
-==================   =====    =====    =======
-Subroutine           Old      New      Speedup
-==================   =====    =====    =======
-vertvisc_coef        1.54s    1.50s    😐
-find_coupling_coef   0.82s    0.68s    1.21x
-==================   =====    =====    =======
+Runtimes, not so much
+
 
 .. notes::
 

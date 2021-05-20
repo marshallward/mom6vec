@@ -47,7 +47,7 @@
     </header>
 
     <footer style="font-size: 1pc; position: absolute; bottom: 2%; left: 2%;">
-      <code><p><a href="https://marshallward.org/ogrp2021/index.html">https://marshallward.org/ogrp2021/index.html</a></p></code>
+      <code><p><a href="https://marshallward.org/mom6vec/index.html">https://marshallward.org/mom6vec/index.html</a></p></code>
     </footer>
 
     <div class="slides">
@@ -223,7 +223,7 @@
 </table>
 <aside class="notes">
 <ul>
-<li>Doube precision! Not single.</li>
+<li>Double precision! Not single.</li>
 <li>Gaea C4 (Xeon E5-2697 v4, 'Broadwell')</li>
 <li><span class="math inline">\(f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}\)</span></li>
 </ul>
@@ -286,8 +286,43 @@
 </aside>
 </section>
 
-<section id="peak" class="title-slide slide level1">
-<h1>Peak</h1>
+<section>
+<section id="peak-gflops" class="title-slide slide level1">
+<h1>Peak GFLOPs</h1>
+<table>
+<thead>
+<tr class="header">
+<th>Operation</th>
+<th>GFLOP/s</th>
+<th>Obs.</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><p>Add</p></td>
+<td><p>14.4</p></td>
+<td><p>14.395</p></td>
+</tr>
+<tr class="even">
+<td><p>Add+Mul</p></td>
+<td><p>28.8</p></td>
+<td><p>28.788</p></td>
+</tr>
+<tr class="odd">
+<td><p>FMA</p></td>
+<td><p>28.8</p></td>
+<td><p>28.788</p></td>
+</tr>
+<tr class="even">
+<td>2x FMA</td>
+<td>57.6</td>
+<td>57.576</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="peak-sse-and-avx" class="slide level2">
+<h2>Peak SSE and AVX</h2>
 <table>
 <thead>
 <tr class="header">
@@ -327,8 +362,7 @@
 </tr>
 </tbody>
 </table>
-</section>
-
+</section></section>
 <section>
 <section id="array-performance" class="title-slide slide level1">
 <h1>Array Performance</h1>
@@ -372,7 +406,6 @@
 <h2>AMD Cacheing</h2>
 <p><img data-src="img/zen3_dp_flops_cached.svg" alt="image" /></p>
 </section></section>
-<section>
 <section id="memory-bound" class="title-slide slide level1">
 <h1>Memory-bound</h1>
 <p><img data-src="img/gaea_dp_flops_membnd.svg" alt="image" /></p>
@@ -381,7 +414,46 @@
 <p>See next slide for the actual numbers:</p>
 </aside>
 </section>
-<section id="peak-array-ops" class="slide level2">
+
+<section>
+<section id="peak-array-ops" class="title-slide slide level1">
+<h1>Peak Array Ops</h1>
+<table>
+<thead>
+<tr class="header">
+<th>Expression</th>
+<th>Max</th>
+<th>L2</th>
+<th>L3</th>
+<th>DRAM</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>y[:] = x[:] + y[:]</td>
+<td>9.3</td>
+<td>3.5</td>
+<td>1.8</td>
+<td>0.7</td>
+</tr>
+<tr class="even">
+<td>y[:] = a x[:] + y[:]</td>
+<td>18.3</td>
+<td>7.0</td>
+<td>3.6</td>
+<td>1.4</td>
+</tr>
+<tr class="odd">
+<td>y[:] = a x[:] + b y[:]</td>
+<td>23.9</td>
+<td>10.6</td>
+<td>5.5</td>
+<td>2.0</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="peak-array-ops-1" class="slide level2">
 <h2>Peak Array Ops</h2>
 <table>
 <thead>
@@ -1025,27 +1097,20 @@
 <thead>
 <tr class="header">
 <th>Platform</th>
-<th>Old</th>
-<th>New</th>
+<th>Runtime</th>
 <th>Speedup</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><p>Gaea C4</p></td>
-<td><p>2.23s</p>
-<p>(1.67)</p></td>
-<td><p>1.27s</p>
-<p>(2.93)</p></td>
-<td><p>1.75x</p></td>
+<td>Gaea C4</td>
+<td>2.23s → 1.27s</td>
+<td>1.75x</td>
 </tr>
 <tr class="even">
-<td><p>AMD @ home</p></td>
-<td><p>1.69s</p>
-<p>(2.30)</p></td>
-<td><p>1.01s</p>
-<p>(3.76)</p></td>
-<td><p>1.67x</p></td>
+<td>AMD @ home</td>
+<td>1.69s → 1.01s</td>
+<td>1.67x</td>
 </tr>
 </tbody>
 </table>
@@ -1374,27 +1439,20 @@
 <thead>
 <tr class="header">
 <th>Platform</th>
-<th>Old</th>
-<th>New</th>
+<th>Runtime</th>
 <th>Speedup</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><p>Gaea</p></td>
-<td><p>1.06</p>
-<p>(2.79)</p></td>
-<td><p>0.87</p>
-<p>(3.43)</p></td>
-<td><p>1.23x</p></td>
+<td>Intel</td>
+<td>1.06s → 0.87s</td>
+<td>1.23x</td>
 </tr>
 <tr class="even">
-<td><p>AMD</p></td>
-<td><p>1.11</p>
-<p>(2.68)</p></td>
-<td><p>0.64</p>
-<p>(5.21)</p></td>
-<td><p>1.74x</p></td>
+<td>AMD</td>
+<td>1.11s → 0.64s</td>
+<td>1.74x</td>
 </tr>
 </tbody>
 </table>
@@ -1403,7 +1461,7 @@
 <section id="barotropic-optimization" class="title-slide slide level1">
 <h1>Barotropic Optimization</h1>
 <pre class=""><code>LOOP BEGIN at ../../ac/../src/core/MOM_barotropic.F90(1491,26)
-   remark #15389: vectorization support: reference eta_wtd(i,j) has unaligned access   [ ../      ../ac/../src/core/MOM_barotropic.F90(1492,7) ]
+   remark #15389: vectorization support: reference eta_wtd(i,j) has unaligned access   [ ../../ac/../src/core/MOM_barotropic.F90(1492,7) ]
    remark #15381: vectorization support: unaligned access used inside loop body
    remark #15305: vectorization support: vector length 2
    remark #15399: vectorization support: unroll factor set to 2
@@ -1435,27 +1493,20 @@ LOOP END</code></pre>
 <thead>
 <tr class="header">
 <th>Platform</th>
-<th>Old</th>
-<th>New</th>
+<th>Runtime</th>
 <th>Speedup</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><p>Gaea</p></td>
-<td><p>2.35</p>
-<p>(1.19)</p></td>
-<td><p>1.60</p>
-<p>(1.74)</p></td>
-<td><p>1.46x</p></td>
+<td>Intel</td>
+<td>2.35s → 1.60s</td>
+<td>1.46x</td>
 </tr>
 <tr class="even">
-<td><p>AMD</p></td>
-<td><p>3.13</p>
-<p>(0.89)</p></td>
-<td><p>1.66</p>
-<p>(1.66)</p></td>
-<td><p>1.89x</p></td>
+<td>AMD</td>
+<td>3.13s → 1.66s</td>
+<td>1.89x</td>
 </tr>
 </tbody>
 </table>
@@ -1554,59 +1605,53 @@ LOOP END</code></pre>
 <p>Don't stop, keep going, even over land!</p>
 </section>
 
-<section id="vertical-viscosity-speedup" class="title-slide slide level1">
-<h1>Vertical Viscosity speedup?</h1>
-<p>FLOPs are up!</p>
+<section id="vertical-viscosity-gflops" class="title-slide slide level1">
+<h1>Vertical Viscosity GFLOP/s</h1>
 <table>
 <thead>
 <tr class="header">
 <th>Subroutine</th>
-<th>Old</th>
-<th>New</th>
+<th>GFLOP/s</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>vertvisc_coef</td>
-<td>1.29</td>
-<td>2.00</td>
+<td>1.29 → 2.00</td>
 </tr>
 <tr class="even">
 <td>find_coupling_coef</td>
-<td>2.50</td>
-<td>5.72</td>
+<td>2.50 → 5.72</td>
 </tr>
 </tbody>
 </table>
+<p>FLOPs are up!</p>
 </section>
 
-<section id="vertical-viscosity-speedup-1" class="title-slide slide level1">
+<section id="vertical-viscosity-speedup" class="title-slide slide level1">
 <h1>Vertical Viscosity "speedup"</h1>
-<p>Runtimes, not quite as exciting.</p>
 <table>
 <thead>
 <tr class="header">
 <th>Subroutine</th>
-<th>Old</th>
-<th>New</th>
+<th>Runtime</th>
 <th>Speedup</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>vertvisc_coef</td>
-<td>1.54s</td>
-<td>1.50s</td>
+<td>1.54s → 1.50s</td>
 <td>😐</td>
 </tr>
 <tr class="even">
 <td>find_coupling_coef</td>
-<td>0.82s</td>
-<td>0.68s</td>
+<td>0.82s → 0.68s</td>
 <td>1.21x</td>
 </tr>
 </tbody>
 </table>
+<p>Runtimes, not so much</p>
 <aside class="notes">
 <p>Though to tell the truth... the results were less than impressive.</p>
 <p>In practice, this could end up being better or worse, depending on the amount of land.</p>
