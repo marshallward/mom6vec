@@ -763,8 +763,30 @@ AMD Speedup
 .. image:: img/subroutine_speedup.svg
 
 
+High-resolution Speedup
+=======================
+
+TODO: Report numbers here
+
+
+Performance Monitoring
+======================
+
+.. image:: img/perf_ci.png
+   :width: 50%
+   :target: https://github.com/marshallward/MOM6/runs/2577952059?check_suite_focus=true
+
+
+Summary
+=======
+
+TODO
+
+
 Moving Forward
-==============
+--------------
+
+.. These are developer (GFDL) comments; remove?
 
 Development guidelines:
 
