@@ -850,7 +850,7 @@ Performance Monitoring
    :widths: 45 55
 
    * - .. image:: img/github_fms_clk.png
-          :target: https://github.com/marshallward/MOM6/runs/2577952059?check_suite_focus=true
+          :target: https://github.com/marshallward/MOM6/runs/2640839721?check_suite_focus=true
 
      - * Run as regression test
        
@@ -867,7 +867,7 @@ Resource Monitoring
    :widths: 40 60
 
    * - .. image:: img/github_perf.png
-          :target: https://github.com/marshallward/MOM6/runs/2636030847?check_suite_focus=true
+          :target: https://github.com/marshallward/MOM6/runs/2640839721?check_suite_focus=true
 
      - * Expose perf metrics to CI
        
