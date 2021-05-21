@@ -47,7 +47,7 @@
     </header>
 
     <footer style="font-size: 1pc; position: absolute; bottom: 2%; left: 2%;">
-      <code><p><a href="https://marshallward.org/mom6vec/index.html">https://marshallward.org/mom6vec/index.html</a></p></code>
+      <code><p><a href="https://marshallward.org/mom6vec">https://marshallward.org/mom6vec</a></p></code>
     </footer>
 
     <div class="slides">
@@ -65,8 +65,15 @@
   <!-- Currently cannot add notes to a title slide, so have to do manually-->
   <aside class="notes">
     <ul>
-    <li><p>some of the more recent work investigating MOM6 performance</p></li>
-    <li><p>Specifically efforts to improve the vectorization of the code</p></li>
+    <li><p>In my previous role: responsible for profiling our coupled models</p>
+    <ul>
+    <li>especially CPU scaling</li>
+    <li>Mostly MOM5, mainly ocean / sea ice</li>
+    </ul></li>
+    <li><p>Scaling efficiency was checked, and improvements were found</p>
+    <ul>
+    <li>but no real sense of how we <em>should</em> be performing</li>
+    </ul></li>
     <li><p>First half will try to put performance in a bit of context</p>
     <ul>
     <li>What is "fast"? What is "fastest"?</li>
@@ -122,16 +129,30 @@
 <p>MOM5 scaling in ACCESS-OM2</p>
 <aside class="notes">
 <ul>
-<li>I arguably made a career out of producing plots like the one shown here.</li>
-<li>CPU scaling has become traditional source of improvement, but it has its limits.</li>
-<li>Ocean models are uniquely suited to scaling due to locality</li>
-<li>Runtimes for MOM5 in the ACCESS-OM2 coupled model are shown.</li>
-<li>Left figure shows that the model is scaleable across resolutions, but tens to taper off at ~0.1 sec/step.</li>
-<li>0.1deg hit the machine limit (well, limit I was allowed to use, at least)</li>
-<li>Probably would not have hit 0.1s but might have gotten closer.</li>
-<li>HOWEVER, right hand side shows that the work per step was still going up and up, even if time per step was not.</li>
-<li>As resolutions drop, CFL means more work per step!</li>
-<li>If dt/step is capped, and steps are getting smaller, is this really sustainable?</li>
+<li><p>Figure shows a traditional scaling performance plot for MOM5 in ACCESS-OM2</p>
+<ul>
+<li>Focus on the left side (RHS denotes efficiency)</li>
+<li>x-axis is the number of CPUs (MPI ranks)</li>
+<li>y-axis is the runtime</li>
+<li>Notes:
+<ul>
+<li>Three resolutions are shown</li>
+<li>Both are logarithmic</li>
+<li>Straight line denotes perfect scaling</li>
+<li>Deviation denotes inefficiency</li>
+</ul></li>
+</ul></li>
+<li><p>CPU scaling has become traditional source of improvement:</p>
+<ul>
+<li>And ocean models are well-suited to CPU scaling</li>
+<li>But as shown, there are limits to scaling</li>
+</ul></li>
+<li><p>All show scaling trends, but all tapear off around 0.1s</p>
+<ul>
+<li>0.1° was limited by computer size</li>
+</ul></li>
+<li><p>As resolutions drop, CFL means more work per step!</p></li>
+<li><p>If dt/step is capped, and steps are getting smaller, the future of CPU scaling is not so optimistic.</p></li>
 </ul>
 </aside>
 </section>
@@ -165,7 +186,7 @@
 <ul>
 <li>Shrink area, raise f, and power consumption stays the same</li>
 </ul></li>
-<li><p>Until 2006 and we're back to nowhere.</p></li>
+<li><p>Until 2006 when the party ended.</p></li>
 </ul>
 </aside>
 </section>
@@ -187,17 +208,17 @@
 </table>
 </section></section>
 <section>
-<section id="vectorization" class="title-slide slide level1">
-<h1>Vectorization</h1>
+<section id="floating-point-performance" class="title-slide slide level1">
+<h1>Floating Point Performance</h1>
 <p><img data-src="img/specfp.svg" alt="image" /></p>
 <aside class="notes">
-<p>:</p>
 <ul>
-<li><p>Despite the end of clock speed increase, FP rates continue to rise, albeit more slowly.</p></li>
+<li><p>But even with static clock speeds, FP rates continued to rise.</p></li>
 <li><p>This is the SPECfp benchmark, it's a bit of a mash of various FP codes, but does include some Fortran models.</p>
 <ul>
 <li>This is actually a composite of four SPECfp benchmarks, normalized across Intel CPUs.</li>
 </ul></li>
+<li><p>The source of these improvements were due in part to greater adoption of vectorization</p></li>
 <li><p>Less important: What happened in the 90s?</p>
 <ul>
 <li>All the DEC, SPARC, etc vector CPUs. They failed to keep up with x86.</li>
@@ -249,6 +270,14 @@
 <dd><p>Potential speedup?</p>
 </dd>
 </dl>
+<aside class="notes">
+<p>So of our three sources of performance:</p>
+<ul>
+<li>CPU scaling seems to be getting harder</li>
+<li>Clock speeds are not viable</li>
+<li>FP rates are increasing, is it vectorization? Are we taking full advantage of it?</li>
+</ul>
+</aside>
 </section>
 
 <section id="vector-instructions" class="title-slide slide level1">
@@ -278,11 +307,16 @@
 </tr>
 </tbody>
 </table>
+<p>(<span class="math inline">\(f_\text{peak}\)</span> = 3.6 GHz)</p>
 <aside class="notes">
 <ul>
-<li>Double precision! Not single.</li>
-<li>Gaea C4 (Xeon E5-2697 v4, 'Broadwell')</li>
-<li><span class="math inline">\(f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}\)</span></li>
+<li><p>Quick review: Vectorization is an form of concurrency</p>
+<ul>
+<li>Combine multiple numbers into larger registers</li>
+<li>Apply operations to each part of the register all at once</li>
+</ul></li>
+<li><p>Double precision! Not single.</p></li>
+<li><p>Gaea C4 (Xeon E5-2697 v4, 'Broadwell')</p></li>
 </ul>
 </aside>
 </section>
@@ -336,9 +370,14 @@
 <p>2 inst. per cycle, even FMA</p>
 <aside class="notes">
 <ul>
-<li>Modern CPUs can execute more than one instruction per cycle.</li>
-<li>Broadwells can do two adds, muls, or FMAs at a time</li>
-<li>Non-arithmetic stuff like loop increments are usually concurrent</li>
+<li><p>Modern CPUs can execute more than one instruction per cycle.</p></li>
+<li><p>This is a block diagram of a Broadwell Execution Unit</p>
+<ul>
+<li>Main point is there are 8 ports</li>
+<li>Each port can do independent tasks (if it has the data)</li>
+</ul></li>
+<li><p>Broadwells can do two adds, muls, or FMAs at a time</p></li>
+<li><p>Non-arithmetic stuff like loop increments are usually concurrent</p></li>
 </ul>
 </aside>
 </section>
@@ -377,6 +416,16 @@
 </tr>
 </tbody>
 </table>
+<aside class="notes">
+<p>Putting all these concepts together:</p>
+<ul>
+<li>Vectorization (4 FLOP/cycle)</li>
+<li>FMAs (2 FLOP/cycle)</li>
+<li>Concurrency (2 FMA/cycle)</li>
+</ul>
+<p>We can get a 16x speedup per clock speed</p>
+<p>... assuming we have enough data!</p>
+</aside>
 </section>
 <section id="peak-sse-and-avx" class="slide level2">
 <h2>Peak SSE and AVX</h2>
@@ -426,16 +475,22 @@
 <p><img data-src="img/gaea_dp_flops.svg" alt="image" /></p>
 <aside class="notes">
 <ul>
-<li>Loops of simple array updates are shown here.</li>
+<li><p>How does it look in practice?</p></li>
+<li><p>Loops of simple array updates are shown here.</p>
+<ul>
+<li>x-axis is the size of the array</li>
+<li>y-axis is GFLOP/s</li>
+</ul></li>
+<li><p>Lots of detail here, but main points:</p>
+<ul>
+<li>None reach the peak (57.6) but get resonably close</li>
+<li>Smaller arrays show a lot of diversity in performance</li>
+<li>Large arrays drop substantially, in clear regimes</li>
+<li>A lot of that diversity collapes down and is lost</li>
+</ul></li>
+<li><p>Other comments</p>
+<ul>
 <li>No assembly, this is in C and the compiler is autovectorizing.</li>
-</ul>
-<p>Lots of detail here, but main points</p>
-<ul>
-<li><p>For small arrays, there is a lot of diversity in performance. Not going to get into that!</p></li>
-<li><p>As arrays get larger two things happen:</p>
-<ul>
-<li>Performance drops like a stone in steps</li>
-<li>Most results collapse onto the lowest curve</li>
 </ul></li>
 </ul>
 </aside>
@@ -454,8 +509,13 @@
 <p><img data-src="img/gaea_dp_flops_cached.svg" alt="image" /></p>
 <aside class="notes">
 <ul>
-<li>Cache hierarchy explains the regimes of performance</li>
-<li>Each line indicates the array length of exactly two arrays in the cache.</li>
+<li><p>Cache hierarchy explains the regimes of performance</p></li>
+<li><p>Each line indicates the array length of exactly two arrays in the cache.</p></li>
+<li><p>What is happening?</p>
+<ul>
+<li>The CPUs cannot fill the caches fast enough to complete the calculations at the optimal rate</li>
+</ul></li>
+<li><p>Compute-bound vs Cache-bound vs RAM-bound</p></li>
 </ul>
 </aside>
 </section>
@@ -509,6 +569,14 @@
 </tr>
 </tbody>
 </table>
+<aside class="notes">
+<p>What we end up with is a kind of rubric to diagnose boundedness</p>
+<ul>
+<li>~1 GFLOP/s: RAM-bound</li>
+<li>~2-5 GFLOP/s: Cache-bound</li>
+<li>&gt;10 GFLOP/s: Compute-bound</li>
+</ul>
+</aside>
 </section>
 <section id="peak-array-ops-1" class="slide level2">
 <h2>Peak Array Ops</h2>
@@ -596,9 +664,16 @@
 </ul>
 <aside class="notes">
 <ul>
+<li><p>So how is MOM6 vectorization?</p>
+<ul>
+<li>This is a compile-time feature, so ought not depend on scaling</li>
+</ul></li>
+<li><p>Using a "benchmark" single-core test</p>
+<ul>
+<li>Reasonble set of realistic components</li>
+<li>A non-trivial land/sea distribution</li>
+</ul></li>
 <li><p>Not necessarily the most physically signficant factors. Just the ones which had a significant impact on performance.</p></li>
-<li><p>Also note that this domain has a nontrivial land mask.</p>
-<p>This will be useful later for testing masked array loops.</p></li>
 </ul>
 </aside>
 </section>
@@ -606,11 +681,32 @@
 <section id="profiling-with-perf" class="title-slide slide level1">
 <h1>Profiling with perf</h1>
 <p><img data-src="img/perf_symbols.png" style="width:80.0%" alt="image" /></p>
+<aside class="notes">
+<ul>
+<li><p>Tool of choice: perf</p></li>
+<li><p>Developed for Linux kernel, distributed with it</p></li>
+<li><p>Sampling profiler, low overhead, reports <em>all</em> symbols</p></li>
+<li><p>Variety of metrics:</p>
+<ul>
+<li>Time</li>
+<li>FLOPs</li>
+<li>Cache hit/miss</li>
+<li>Branch prediction</li>
+</ul></li>
+</ul>
+</aside>
 </section>
 
 <section id="profiling-with-perf-1" class="title-slide slide level1">
 <h1>Profiling with perf</h1>
 <p><img data-src="img/perf_lines.png" style="width:80.0%" alt="image" /></p>
+<aside class="notes">
+<ul>
+<li>Best of all, it is a line profile.</li>
+<li>Bestest of all, it is an <em>assembly</em> line profiler</li>
+<li>Detailed assessment of vectorization</li>
+</ul>
+</aside>
 </section>
 
 <section id="perf-stat" class="title-slide slide level1">
@@ -636,11 +732,13 @@
 <p><img data-src="img/subroutine_profile_gaea.svg" style="width:75.0%" alt="image" /></p>
 <aside class="notes">
 <ul>
-<li>Hopefully not too confusing... %runtime and FLOPS together, even same axis</li>
-<li>Speeds are on order of 1-2 GFLOP/s</li>
-<li>Places most results in DRAM or L3 bound</li>
-<li>EOS is doing quite well at &gt;10 GFLOP/s</li>
-<li>Also note the "long tail" in the top 50 functions.. there are no easy wins here, it will take a lot of improvements over a lot of functions to see any major speedups.</li>
+<li><p>Hopefully not too confusing... %runtime and FLOPS together, even same axis</p></li>
+<li><p>Most expensive fns are Speeds are ~1-2 GFLOP/s</p>
+<ul>
+<li>DRAM or L3-bound</li>
+</ul></li>
+<li><p>EOS is doing quite well at &gt;10 GFLOP/s</p></li>
+<li><p>Also note the "long tail" in the top 50 functions.. there are no easy wins here, it will take a lot of improvements over a lot of functions to see any major speedups.</p></li>
 </ul>
 </aside>
 </section>
@@ -664,6 +762,14 @@
 <li>Vertical viscosity (<code>find_coupling_coef</code>)</li>
 <li>EOS (<code>int_density_dz_wright</code>)</li>
 </ul>
+<aside class="notes">
+<p>Herein I will highlight our progress</p>
+<ul>
+<li>Investigation of some of the major bottlenecks</li>
+<li>Improvements we've made</li>
+</ul>
+<p>But the long tail means there is much to do</p>
+</aside>
 </section>
 
 <section id="horizontal-viscosity" class="title-slide slide level1">
@@ -807,6 +913,13 @@
     enddo ; enddo
 </code></pre>
 <p>Many disparate updates per iteration</p>
+<aside class="notes">
+<p>If we have a look at the horizontal viscosity function:</p>
+<ul>
+<li>A large macro-loop doing a diverse set of tasks</li>
+<li>All wrapped in if-blocks!</li>
+</ul>
+</aside>
 </section>
 
 <section id="non-vectorized-code" class="title-slide slide level1">
@@ -827,6 +940,9 @@
 </tr>
 </tbody>
 </table>
+<aside class="notes">
+<p>The assembly shows that we are using vector instructions, but we are using the <em>serial form</em> of them!</p>
+</aside>
 </section>
 
 <section id="excessive-stack" class="title-slide slide level1">
@@ -854,10 +970,18 @@
 </tr>
 </tbody>
 </table>
+<aside class="notes">
+<p>We also see enormous amount of movement between the registers and the function's stack memory.</p>
+<p>The constant "changing gears" means that</p>
+<ul>
+<li>the registers must be constantly</li>
+<li>intermediate results need to be held in stack</li>
+</ul>
+</aside>
 </section>
 
-<section id="vectorized-hor_visc" class="title-slide slide level1">
-<h1>Vectorized hor_visc</h1>
+<section id="vectorized-hor-visc" class="title-slide slide level1">
+<h1>Vectorized Hor Visc</h1>
 <pre class="fortran numberLines" data-code="fortran
 
 "><code data-start-line="854
@@ -1147,10 +1271,20 @@
 <li>Move if-blocks outside loops</li>
 <li>Promote scalars to 2d arrays (sparingly)</li>
 </ol>
+<aside class="notes">
+<p>How to we resolve this?</p>
+<ul>
+<li><p>Break the large loop into many smaller loops</p></li>
+<li><p>Promote scalars to 2d arrays when needed</p>
+<blockquote>
+<p>(Slightly unintuitive, but it is a win here)</p>
+</blockquote></li>
+</ul>
+</aside>
 </section>
 
-<section id="hor_visc-speedup" class="title-slide slide level1">
-<h1>Hor_visc Speedup</h1>
+<section id="hor-visc-speedup" class="title-slide slide level1">
+<h1>Hor Visc Speedup</h1>
 <table>
 <thead>
 <tr class="header">
@@ -1666,6 +1800,10 @@ LOOP END</code></pre>
 <h1>Maintain Pipelines</h1>
 <p><img data-src="img/stay_on_target.gif" style="width:45.0%" alt="image" /></p>
 <p>Don't stop, keep going, even over land!</p>
+<aside class="notes">
+<p>We abstract our data as multidimensional, but of course in practice it is still a single 1D array.</p>
+<p>To get the best performance, stay "in the trench" and maintain contiguity</p>
+</aside>
 </section>
 
 <section id="vertical-viscosity-gflops" class="title-slide slide level1">
@@ -1857,8 +1995,8 @@ LOOP END</code></pre>
 <h1>Performance Monitoring</h1>
 <table>
 <colgroup>
-<col style="width: 45%" />
 <col style="width: 55%" />
+<col style="width: 45%" />
 </colgroup>
 <tbody>
 <tr class="odd">
@@ -1877,15 +2015,15 @@ LOOP END</code></pre>
 <h1>Resource Monitoring</h1>
 <table>
 <colgroup>
-<col style="width: 40%" />
-<col style="width: 60%" />
+<col style="width: 55%" />
+<col style="width: 45%" />
 </colgroup>
 <tbody>
 <tr class="odd">
 <td><a href="https://github.com/marshallward/MOM6/runs/2640839721?check_suite_focus=true"><img data-src="img/github_perf.png" alt="image" /></a></td>
 <td><ul>
 <li>Expose perf metrics to CI</li>
-<li>Work in progress!!</li>
+<li>Challenges abound...</li>
 </ul></td>
 </tr>
 </tbody>

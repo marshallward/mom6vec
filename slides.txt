@@ -5,11 +5,17 @@ The Vectorization of MOM6
 :author: Marshall Ward
 :description: Overview of recent efforts to vectorize MOM6
 :date: 2021-05-21
-:url: https://marshallward.org/mom6vec/index.html
+:url: https://marshallward.org/mom6vec
 :preface:
-   * some of the more recent work investigating MOM6 performance
+   * In my previous role: responsible for profiling our coupled models
 
-   * Specifically efforts to improve the vectorization of the code
+      * especially CPU scaling
+
+      * Mostly MOM5, mainly ocean / sea ice
+
+   * Scaling efficiency was checked, and improvements were found
+
+      * but no real sense of how we *should* be performing
 
    * First half will try to put performance in a bit of context
 
@@ -69,29 +75,34 @@ MOM5 scaling in ACCESS-OM2
 
 .. notes::
 
-   * I arguably made a career out of producing plots like the one shown here.
+   * Figure shows a traditional scaling performance plot for MOM5 in ACCESS-OM2
 
-   * CPU scaling has become traditional source of improvement, but it has its
-     limits.
+      * Focus on the left side (RHS denotes efficiency)
 
-   * Ocean models are uniquely suited to scaling due to locality
+      * x-axis is the number of CPUs (MPI ranks)
+      * y-axis is the runtime
 
-   * Runtimes for MOM5 in the ACCESS-OM2 coupled model are shown.
+      * Notes:
 
-   * Left figure shows that the model is scaleable across resolutions, but tens
-     to taper off at ~0.1 sec/step.
+        * Three resolutions are shown
 
-   * 0.1deg hit the machine limit (well, limit I was allowed to use, at least)
+        * Both are logarithmic
+        * Straight line denotes perfect scaling
+        * Deviation denotes inefficiency
 
-   * Probably would not have hit 0.1s but might have gotten closer.
+   * CPU scaling has become traditional source of improvement:
 
-   * HOWEVER, right hand side shows that the work per step was still going up
-     and up, even if time per step was not.
+      * And ocean models are well-suited to CPU scaling 
+      * But as shown, there are limits to scaling
+
+   * All show scaling trends, but all tapear off around 0.1s
+
+      * 0.1° was limited by computer size
 
    * As resolutions drop, CFL means more work per step!
 
-   * If dt/step is capped, and steps are getting smaller, is this really
-     sustainable?
+   * If dt/step is capped, and steps are getting smaller, the future of CPU
+     scaling is not so optimistic.
 
 
 ----
@@ -128,7 +139,7 @@ Clock Speed
 
       * Shrink area, raise f, and power consumption stays the same
 
-   * Until 2006 and we're back to nowhere.
+   * Until 2006 when the party ended.
 
 
 ----
@@ -145,21 +156,23 @@ Clock Speed
        Since then, speeds waver around 3GHz
 
 
-Vectorization
-=============
+Floating Point Performance
+==========================
 
 .. image:: img/specfp.svg
 
-.. notes:::
+.. notes::
 
-   * Despite the end of clock speed increase, FP rates continue to rise, albeit
-     more slowly.
+   * But even with static clock speeds, FP rates continued to rise.
 
    * This is the SPECfp benchmark, it's a bit of a mash of various FP codes,
      but does include some Fortran models.
 
       * This is actually a composite of four SPECfp benchmarks, normalized
         across Intel CPUs.
+
+   * The source of these improvements were due in part to greater adoption of
+     vectorization
 
    * Less important: What happened in the 90s?
 
@@ -199,6 +212,17 @@ Clock speed
 Vectorization
    Potential speedup?
 
+.. notes::
+
+   So of our three sources of performance:
+
+   * CPU scaling seems to be getting harder
+
+   * Clock speeds are not viable
+
+   * FP rates are increasing, is it vectorization?  Are we taking full
+     advantage of it?
+
 
 Vector Instructions
 ===================
@@ -212,13 +236,19 @@ SSE      2 doubles   7.2      7.196
 AVX      4 doubles   14.4     14.395
 ======   ==========  =======  ===========
 
+(:math:`f_\text{peak}` = 3.6 GHz)
+
 .. notes::
+
+   * Quick review: Vectorization is an form of concurrency
+
+      * Combine multiple numbers into larger registers
+
+      * Apply operations to each part of the register all at once
 
    * Double precision!  Not single.
 
    * Gaea C4 (Xeon E5-2697 v4, 'Broadwell')
-
-   * :math:`f_\text{peak} = 3.6 \times 10^9 \ \text{Hz}`
 
 
 Fused-Multiply Add
@@ -262,6 +292,11 @@ Concurrency
 
    * Modern CPUs can execute more than one instruction per cycle.
 
+   * This is a block diagram of a Broadwell Execution Unit
+
+      * Main point is there are 8 ports
+      * Each port can do independent tasks (if it has the data)
+
    * Broadwells can do two adds, muls, or FMAs at a time
 
    * Non-arithmetic stuff like loop increments are usually concurrent
@@ -278,6 +313,19 @@ Add+Mul     28.8     28.788
 FMA         28.8     28.788
 2x FMA      57.6     57.576
 ==========  =======  =======
+
+
+.. notes::
+
+   Putting all these concepts together:
+
+   * Vectorization (4 FLOP/cycle)
+   * FMAs (2 FLOP/cycle)
+   * Concurrency (2 FMA/cycle)
+
+   We can get a 16x speedup per clock speed
+
+   ... assuming we have enough data!
 
 
 Peak SSE and AVX
@@ -309,20 +357,26 @@ Array Performance
 
 .. notes::
 
+   * How does it look in practice?
+
    * Loops of simple array updates are shown here.
 
-   * No assembly, this is in C and the compiler is autovectorizing.
+      * x-axis is the size of the array
+      * y-axis is GFLOP/s
 
-   Lots of detail here, but main points
+   * Lots of detail here, but main points:
 
-   * For small arrays, there is a lot of diversity in performance.
-     Not going to get into that!
+      * None reach the peak (57.6) but get resonably close
 
-   * As arrays get larger two things happen:
+      * Smaller arrays show a lot of diversity in performance
 
-      * Performance drops like a stone in steps
+      * Large arrays drop substantially, in clear regimes
 
-      * Most results collapse onto the lowest curve
+      * A lot of that diversity collapes down and is lost
+
+   * Other comments
+
+      * No assembly, this is in C and the compiler is autovectorizing.
 
 
 AMD Arrays
@@ -358,6 +412,14 @@ Array Cacheing
 
    * Each line indicates the array length of exactly two arrays in the cache.
 
+   * What is happening?
+
+      * The CPUs cannot fill the caches fast enough to complete the
+        calculations at the optimal rate
+
+   * Compute-bound vs Cache-bound vs RAM-bound
+
+
 AMD Cacheing
 ------------
 
@@ -386,6 +448,15 @@ y[:] = x[:] + y[:]      9.3   3.5   1.8   0.7
 y[:] = a x[:] + y[:]    18.3  7.0   3.6   1.4
 y[:] = a x[:] + b y[:]  23.9  10.6  5.5   2.0
 ======================  ====  ====  ====  ====
+
+
+.. notes::
+
+   What we end up with is a kind of rubric to diagnose boundedness
+
+   * ~1 GFLOP/s: RAM-bound
+   * ~2-5 GFLOP/s: Cache-bound
+   * >10 GFLOP/s: Compute-bound
 
 
 Peak Array Ops
@@ -432,12 +503,17 @@ MOM6 sample config
 
 .. notes::
 
+   * So how is MOM6 vectorization?
+
+      * This is a compile-time feature, so ought not depend on scaling
+
+   * Using a "benchmark" single-core test
+
+      * Reasonble set of realistic components
+      * A non-trivial land/sea distribution
+
    * Not necessarily the most physically signficant factors.  Just the ones
      which had a significant impact on performance.
-
-   * Also note that this domain has a nontrivial land mask.
-
-     This will be useful later for testing masked array loops.
 
 
 Profiling with perf
@@ -446,12 +522,36 @@ Profiling with perf
 .. image:: img/perf_symbols.png
    :width: 80%
 
+.. notes::
+
+   * Tool of choice: perf
+
+   * Developed for Linux kernel, distributed with it
+
+   * Sampling profiler, low overhead, reports *all* symbols
+
+   * Variety of metrics:
+
+      * Time
+      * FLOPs
+      * Cache hit/miss
+      * Branch prediction
+
 
 Profiling with perf
 ===================
 
 .. image:: img/perf_lines.png
    :width: 80%
+
+
+.. notes::
+
+   * Best of all, it is a line profile.
+
+   * Bestest of all, it is an *assembly* line profiler
+
+   * Detailed assessment of vectorization
 
 
 perf stat
@@ -471,9 +571,9 @@ Profile Overview
 
    * Hopefully not too confusing... %runtime and FLOPS together, even same axis
 
-   * Speeds are on order of 1-2 GFLOP/s
-
-   * Places most results in DRAM or L3 bound
+   * Most expensive fns are Speeds are ~1-2 GFLOP/s
+   
+      * DRAM or L3-bound
 
    * EOS is doing quite well at >10 GFLOP/s
 
@@ -509,6 +609,15 @@ Investigation Targets
 
 * EOS (``int_density_dz_wright``)
 
+.. notes::
+
+   Herein I will highlight our progress
+
+   * Investigation of some of the major bottlenecks
+   * Improvements we've made
+
+   But the long tail means there is much to do
+
 
 Horizontal Viscosity
 ====================
@@ -521,6 +630,15 @@ Horizontal Viscosity
    :data-line-numbers: 1|2-6|7-13|14-18|20-73|127
 
 Many disparate updates per iteration
+
+
+.. notes::
+
+   If we have a look at the horizontal viscosity function:
+
+   * A large macro-loop doing a diverse set of tasks
+
+   * All wrapped in if-blocks!
 
 
 Non-vectorized code
@@ -538,6 +656,11 @@ Non-vectorized code
 ``v___sd``  Serial
 ``v___pd``  Parallel
 ==========  ========
+
+.. notes::
+
+   The assembly shows that we are using vector instructions, but we are using
+   the *serial form* of them!
 
 
 Excessive Stack
@@ -559,8 +682,19 @@ vmovsd   Serial move
 vmaxsd   Serial max
 ======   ===================
 
+.. notes::
 
-Vectorized hor_visc
+   We also see enormous amount of movement between the registers and the
+   function's stack memory.
+
+   The constant "changing gears" means that
+
+   * the registers must be constantly
+   
+   * intermediate results need to be held in stack
+
+
+Vectorized Hor Visc
 ===================
 
 .. include:: src/MOM_hor_visc_vec.F90
@@ -574,8 +708,18 @@ Vectorized hor_visc
 
 2. Promote scalars to 2d arrays (sparingly)
 
+.. notes::
 
-Hor_visc Speedup
+   How to we resolve this?
+
+   * Break the large loop into many smaller loops
+
+   * Promote scalars to 2d arrays when needed
+
+      (Slightly unintuitive, but it is a win here)
+
+
+Hor Visc Speedup
 ================
 
 ============   =============  =======
@@ -735,6 +879,13 @@ Maintain Pipelines
 
 Don't stop, keep going, even over land!
 
+.. notes::
+
+   We abstract our data as multidimensional, but of course in practice it is 
+   still a single 1D array.
+
+   To get the best performance, stay "in the trench" and maintain contiguity
+
 
 Vertical Viscosity GFLOP/s
 ==========================
@@ -847,7 +998,7 @@ Performance Monitoring
 ======================
 
 .. list-table::
-   :widths: 45 55
+   :widths: 55 45
 
    * - .. image:: img/github_fms_clk.png
           :target: https://github.com/marshallward/MOM6/runs/2640839721?check_suite_focus=true
@@ -864,14 +1015,14 @@ Resource Monitoring
 
 
 .. list-table::
-   :widths: 40 60
+   :widths: 55 45
 
    * - .. image:: img/github_perf.png
           :target: https://github.com/marshallward/MOM6/runs/2640839721?check_suite_focus=true
 
      - * Expose perf metrics to CI
        
-       * Work in progress!!
+       * Challenges abound...
 
 
 Summary
