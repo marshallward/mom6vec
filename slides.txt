@@ -4,7 +4,7 @@ The Vectorization of MOM6
 
 :author: Marshall Ward
 :description: Overview of recent efforts to vectorize MOM6
-:date: 2021-04-21
+:date: 2021-05-21
 :url: https://marshallward.org/mom6vec/index.html
 :preface:
    * some of the more recent work investigating MOM6 performance
@@ -63,6 +63,7 @@ CPU Scaling
 ===========
 
 .. image:: img/scaling_ocn.svg
+   :width: 75%
 
 MOM5 scaling in ACCESS-OM2
 
@@ -93,6 +94,20 @@ MOM5 scaling in ACCESS-OM2
      sustainable?
 
 
+----
+
+.. list-table::
+   :widths: 50 50
+
+   * - .. image:: img/scaling_ocn.svg
+
+     - CPU scalability has proven effective to boost performance.
+
+       But such methods have limits (~0.1s / step)
+
+       And as resolutions increase, CFL implies more steps.
+
+
 Clock Speed
 ===========
 
@@ -116,6 +131,20 @@ Clock Speed
    * Until 2006 and we're back to nowhere.
 
 
+----
+
+.. list-table::
+   :widths: 50 50
+
+   * - .. image:: img/clockspeed.svg
+
+     - Clock speed was a traditional measure of performance
+
+       But overheating broke this trend around 2005 (see "Dennard scaling")
+
+       Since then, speeds waver around 3GHz
+
+
 Vectorization
 =============
 
@@ -123,7 +152,8 @@ Vectorization
 
 .. notes:::
 
-   * Despite the end of clock speed increase, FP rates continue to rise
+   * Despite the end of clock speed increase, FP rates continue to rise, albeit
+     more slowly.
 
    * This is the SPECfp benchmark, it's a bit of a mash of various FP codes,
      but does include some Fortran models.
@@ -131,22 +161,30 @@ Vectorization
       * This is actually a composite of four SPECfp benchmarks, normalized
         across Intel CPUs.
 
-   * Main point: despite halt of CPU speeds (denoted by dash) FP performance
-     did continuee to rise, albeit more slowly.
-
    * Less important: What happened in the 90s?
 
       * All the DEC, SPARC, etc vector CPUs.  They failed to keep up with x86.
 
+----
 
-Intel normalization
--------------------
+.. list-table::
+   :widths: 50 50
 
-.. image:: img/specfp_intel.svg
+   * - .. image:: img/specfp.svg
 
-.. notes::
+     - Despite halt of :math:`f`, floating point rates have increased
 
-   Showing the normalization of Intel-based architectures.
+       SPECfp shows the general FP trend over time and CPUs
+
+----
+
+.. list-table::
+   :widths: 50 50
+
+   * - .. image:: img/specfp_intel.svg
+
+     - Usually not a good idea to combine SPECfp's, but one can normalize based
+       on Intel CPUs to create some kind of trend.
 
 
 How to improve performance?
@@ -218,7 +256,7 @@ Concurrency
 .. image:: img/broadwell_exc.svg
    :ref: https://en.wikichip.org/wiki/File:broadwell_block_diagram.svg
 
-2 instr. per cycle, even FMA
+2 inst. per cycle, even FMA
 
 .. notes::
 
@@ -236,11 +274,8 @@ Peak GFLOPs
 Operation   GFLOP/s  Obs.
 ==========  =======  =======
 Add         14.4     14.395
-
 Add+Mul     28.8     28.788
-
 FMA         28.8     28.788
-
 2x FMA      57.6     57.576
 ==========  =======  =======
 
@@ -430,6 +465,7 @@ Profile Overview
 ================
 
 .. image:: img/subroutine_profile_gaea.svg
+   :width: 75%
 
 .. notes::
 
@@ -484,6 +520,8 @@ Horizontal Viscosity
    :number-lines: 831
    :data-line-numbers: 1|2-6|7-13|14-18|20-73|127
 
+Many disparate updates per iteration
+
 
 Non-vectorized code
 ===================
@@ -522,8 +560,8 @@ vmaxsd   Serial max
 ======   ===================
 
 
-Vectorized HorVisc
-==================
+Vectorized hor_visc
+===================
 
 .. include:: src/MOM_hor_visc_vec.F90
    :code: fortran
@@ -532,20 +570,20 @@ Vectorized HorVisc
    :number-lines: 831
    :data-line-numbers: 1-10|12-23|28-32|225-231
 
-1. Promote repeated scalars to 2d arrays
+1. Move if-blocks outside loops
 
-2. Move if-blocks outside loops
+2. Promote scalars to 2d arrays (sparingly)
 
 
-Hor Visc Speedup
-=====================
+Hor_visc Speedup
+================
 
-==========  =============  =======
-Platform    Runtime        Speedup
-==========  =============  =======
-Gaea C4     2.23s → 1.27s  1.75x
-AMD @ home  1.69s → 1.01s  1.67x
-==========  =============  =======
+============   =============  =======
+Platform       Runtime        Speedup
+============   =============  =======
+Intel (Gaea)   2.23s → 1.27s  1.75x
+AMD (home)     1.69s → 1.01s  1.67x
+============   =============  =======
 
 .. GFLOP/s
             (1.67)   (2.93)
@@ -562,6 +600,8 @@ Coriolis advection
    :number-lines: 424
    :data-line-numbers: 1|17-32|245-257
 
+200 lines separate ``max_fvq`` write and read
+
 
 Coriolis advection
 ==================
@@ -572,6 +612,8 @@ Coriolis advection
    :end-line: 694
    :number-lines: 669
    :data-line-numbers: 7-20
+
+Keep fields collocated
 
 
 Coriolis Speedup
@@ -610,6 +652,8 @@ Barotropic Optimization
       remark #25015: Estimate of max trip count of loop=3
    LOOP END
 
+A typical vectorization report
+
 
 Barotropic Optimization...?
 ===========================
@@ -625,11 +669,13 @@ Barotropic Optimization...?
    remark #25464: Some optimizations were skipped to constrain compile
       time. Consider overriding limits (-qoverride-limits).
 
+2000 lines may be too long...
+
 
 Barotropic Speedup
 ==================
 
-Engage the Override!
+Engage the Override! ``-qoverride-limts``
 
 ========    =============  =======
 Platform    Runtime        Speedup
@@ -653,7 +699,7 @@ Vertical Viscosity
    :start-line: 1248
    :end-line: 1270
    :number-lines: 1248
-   :data-line-numbers: 1-22|1|22
+   :data-line-numbers: 1|22
 
 .. notes::
 
@@ -670,6 +716,8 @@ Vertical Viscosity
    :end-line: 1489
    :number-lines: 1462
    :data-line-numbers: 1-4|23-27
+
+Remove `do_i(:)` to improve pipeline
 
 .. notes::
 
@@ -733,6 +781,7 @@ What about that EOS?
    :start-line: 578
    :end-line: 619
    :number-lines: 578
+   :data-line-numbers: 9-14|21-37
 
 High *arithmetic intensity*: many ops per memory access
 
@@ -741,6 +790,9 @@ Gaea Speedup
 ============
 
 .. image:: img/subroutine_speedup_gaea.svg
+   :width: 60%
+
+Overall speedup of ~10%
 
 .. notes::
 
@@ -766,65 +818,102 @@ AMD Speedup
 High-resolution Speedup
 =======================
 
-TODO: Report numbers here
+1440 x 1080 x 75 points, 960 MPI ranks
+
+=============  =============  =======  =========
+Subroutine     Runtimes       Speedup  (1-core)
+=============  =============  =======  =========
+``hor_visc``   1.51s → 0.81s  1.87x    (1.75x)
+``CorAdCalc``  0.81s → 0.71s  1.14x    (1.23x)
+``btstep``     4.08s → 3.53s  1.22x    (1.46x)
+=============  =============  =======  =========
+
+~7% speedup of dynamic core
+
+
+Vertical viscosity
+------------------
+
+=============  =============  =======  =========
+subroutine     Runtimes       Speedup  (1-core)
+=============  =============  =======  =========
+``vert_visc``  3.69s → 4.24s  0.87x    (1x)
+=============  =============  =======  =========
+
+NOTE: No CPU land masking
 
 
 Performance Monitoring
 ======================
 
-.. image:: img/perf_ci.png
-   :width: 50%
-   :target: https://github.com/marshallward/MOM6/runs/2577952059?check_suite_focus=true
+.. list-table::
+   :widths: 45 55
+
+   * - .. image:: img/github_fms_clk.png
+          :target: https://github.com/marshallward/MOM6/runs/2577952059?check_suite_focus=true
+
+     - * Run as regression test
+       
+       * Integrate w/ GitLab CI
+       
+       * Archive resuts to DB
+
+
+Resource Monitoring
+===================
+
+
+.. list-table::
+   :widths: 40 60
+
+   * - .. image:: img/github_perf.png
+          :target: https://github.com/marshallward/MOM6/runs/2636030847?check_suite_focus=true
+
+     - * Expose perf metrics to CI
+       
+       * Work in progress!!
 
 
 Summary
 =======
 
-TODO
+* We are monitoring FLOPs and vectorization
+
+* Single-core FLOP rates of ~2 GFLOPs
+
+* Achievable speedups of ~1.5x - 2x
+
+* Translates to large parallel jobs
+
+* Infrastructure to monitor performance underway...
 
 
-Moving Forward
---------------
+Vectorization Process
+---------------------
 
-.. These are developer (GFDL) comments; remove?
+Phase 1
+   Enable vectorization, confirm optimizations
 
-Development guidelines:
+Phase 2
+   Minimize RAM access, collocate arrays
 
-* Profile and identify hotspots
+Phase 3
+   Memory alignment, more stack usage, peel loops
 
-* Enable vectorization
+Phase 4
+   Redesign to optimize *arithmetic intensity*
+
+
+Guidelines for Contributors
+---------------------------
 
 * Avoid if-blocks in loops
 
 * Keep references close together
 
-* Reduce memory access
+* Minimize array reads/writes
 
 * Keep functions small (<2000 lines?)
-
-
-Things we haven't talked about
-------------------------------
-
-* Array alignment and peel loops
-
-* Heap vs Stack (incl. alignment)
-
-* Pipelining
-
-* Arithmetic Intensity
-
-
-More things we haven't talked about
------------------------------------
-
-Multicore/node jobs
-
-* Clock speed throttling
-
-* Sharing the RAM bandwidth + NUMA
-
-* perf on MPI jobs
 
 
 Apocrypha
@@ -834,7 +923,7 @@ Apocrypha
 Whence GPUs?
 ============
 
-One core vs 1 GPU process
+One core vs 1 GPU task
 
 .. image:: img/p1_gpu_flops.svg
    :width: 60%
@@ -843,7 +932,7 @@ One core vs 1 GPU process
 Whence GPUs?
 ------------
 
-6 cores vs 6 GPU procs
+6 cores vs 6 GPU tasks
 
 .. image:: img/p6_gpu_flops.svg
    :width: 60%
@@ -865,15 +954,14 @@ Lots of layered sums, e.g.
       enddo
    enddo
 
-Very non-contiguous!  Stay on target!
-
-Reorder to (k,i,j)
+Very non-contiguous!  Reorder to (k,i,j)
 
 
 Barotropic kij Speedup
 ----------------------
 
 .. image:: img/subroutine_speedup_bt.svg
+   :width: 70%
 
 
 Reordering problems
@@ -898,8 +986,8 @@ Reordering problems
 Work in progress...
 
 
-Ops per cycle
-=============
+Answer-changing Speedups
+========================
 
 This is slow::
 
@@ -912,23 +1000,9 @@ This is faster::
 
 1. Fewer operations (3 vs 5 mults)
 
-2. Fewer instructions: Two can be pipelined!
+2. Fewer instructions: Two can be pipelined
 
-But changes answers...
-
-
-Heap vs Stack
-=============
-
-Stack
-   Local memory created by the function
-
-Heap
-   External global memory, `allocate()`
-
-Compilers cannot manipulate heap memory, must work around ambiguity.
-
-Stack memory can be *aligned* for better performance.
+... but changes answers
 
 
 Excessive Stack?

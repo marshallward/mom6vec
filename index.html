@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="generator" content="pandoc">
   <meta name="author" content="Marshall Ward">
-  <meta name="dcterms.date" content="2021-04-21">
+  <meta name="dcterms.date" content="2021-05-21">
   <title>The Vectorization of MOM6</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -61,7 +61,7 @@
   </div-->
   <h1 class="title">The Vectorization of MOM6</h1>
   <p class="author" style="text-align: right;">Marshall Ward</p>
-  <p class="date" style="text-align: right;">2021-04-21</p>
+  <p class="date" style="text-align: right;">2021-05-21</p>
   <!-- Currently cannot add notes to a title slide, so have to do manually-->
   <aside class="notes">
     <ul>
@@ -115,9 +115,10 @@
 </aside>
 </section>
 
+<section>
 <section id="cpu-scaling" class="title-slide slide level1">
 <h1>CPU Scaling</h1>
-<p><img data-src="img/scaling_ocn.svg" alt="image" /></p>
+<p><img data-src="img/scaling_ocn.svg" style="width:75.0%" alt="image" /></p>
 <p>MOM5 scaling in ACCESS-OM2</p>
 <aside class="notes">
 <ul>
@@ -134,7 +135,24 @@
 </ul>
 </aside>
 </section>
+<section class="slide level2">
 
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><p><img data-src="img/scaling_ocn.svg" alt="image" /></p></td>
+<td><p>CPU scalability has proven effective to boost performance.</p>
+<p>But such methods have limits (~0.1s / step)</p>
+<p>And as resolutions increase, CFL implies more steps.</p></td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
 <section id="clock-speed" class="title-slide slide level1">
 <h1>Clock Speed</h1>
 <p><img data-src="img/clockspeed.svg" style="width:70.0%" alt="image" /></p>
@@ -151,7 +169,23 @@
 </ul>
 </aside>
 </section>
+<section class="slide level2">
 
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><p><img data-src="img/clockspeed.svg" alt="image" /></p></td>
+<td><p>Clock speed was a traditional measure of performance</p>
+<p>But overheating broke this trend around 2005 (see "Dennard scaling")</p>
+<p>Since then, speeds waver around 3GHz</p></td>
+</tr>
+</tbody>
+</table>
+</section></section>
 <section>
 <section id="vectorization" class="title-slide slide level1">
 <h1>Vectorization</h1>
@@ -159,12 +193,11 @@
 <aside class="notes">
 <p>:</p>
 <ul>
-<li><p>Despite the end of clock speed increase, FP rates continue to rise</p></li>
+<li><p>Despite the end of clock speed increase, FP rates continue to rise, albeit more slowly.</p></li>
 <li><p>This is the SPECfp benchmark, it's a bit of a mash of various FP codes, but does include some Fortran models.</p>
 <ul>
 <li>This is actually a composite of four SPECfp benchmarks, normalized across Intel CPUs.</li>
 </ul></li>
-<li><p>Main point: despite halt of CPU speeds (denoted by dash) FP performance did continuee to rise, albeit more slowly.</p></li>
 <li><p>Less important: What happened in the 90s?</p>
 <ul>
 <li>All the DEC, SPARC, etc vector CPUs. They failed to keep up with x86.</li>
@@ -172,12 +205,36 @@
 </ul>
 </aside>
 </section>
-<section id="intel-normalization" class="slide level2">
-<h2>Intel normalization</h2>
-<p><img data-src="img/specfp_intel.svg" alt="image" /></p>
-<aside class="notes">
-<p>Showing the normalization of Intel-based architectures.</p>
-</aside>
+<section class="slide level2">
+
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><p><img data-src="img/specfp.svg" alt="image" /></p></td>
+<td><p>Despite halt of <span class="math inline">\(f\)</span>, floating point rates have increased</p>
+<p>SPECfp shows the general FP trend over time and CPUs</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section class="slide level2">
+
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><img data-src="img/specfp_intel.svg" alt="image" /></td>
+<td>Usually not a good idea to combine SPECfp's, but one can normalize based on Intel CPUs to create some kind of trend.</td>
+</tr>
+</tbody>
+</table>
 </section></section>
 <section id="how-to-improve-performance" class="title-slide slide level1">
 <h1>How to improve performance?</h1>
@@ -276,7 +333,7 @@
 <section id="concurrency" class="title-slide slide level1">
 <h1>Concurrency</h1>
 <p><img data-src="img/broadwell_exc.svg" alt="image" /></p>
-<p>2 instr. per cycle, even FMA</p>
+<p>2 inst. per cycle, even FMA</p>
 <aside class="notes">
 <ul>
 <li>Modern CPUs can execute more than one instruction per cycle.</li>
@@ -299,19 +356,19 @@
 </thead>
 <tbody>
 <tr class="odd">
-<td><p>Add</p></td>
-<td><p>14.4</p></td>
-<td><p>14.395</p></td>
+<td>Add</td>
+<td>14.4</td>
+<td>14.395</td>
 </tr>
 <tr class="even">
-<td><p>Add+Mul</p></td>
-<td><p>28.8</p></td>
-<td><p>28.788</p></td>
+<td>Add+Mul</td>
+<td>28.8</td>
+<td>28.788</td>
 </tr>
 <tr class="odd">
-<td><p>FMA</p></td>
-<td><p>28.8</p></td>
-<td><p>28.788</p></td>
+<td>FMA</td>
+<td>28.8</td>
+<td>28.788</td>
 </tr>
 <tr class="even">
 <td>2x FMA</td>
@@ -576,7 +633,7 @@
 <section>
 <section id="profile-overview" class="title-slide slide level1">
 <h1>Profile Overview</h1>
-<p><img data-src="img/subroutine_profile_gaea.svg" alt="image" /></p>
+<p><img data-src="img/subroutine_profile_gaea.svg" style="width:75.0%" alt="image" /></p>
 <aside class="notes">
 <ul>
 <li>Hopefully not too confusing... %runtime and FLOPS together, even same axis</li>
@@ -749,6 +806,7 @@
 
     enddo ; enddo
 </code></pre>
+<p>Many disparate updates per iteration</p>
 </section>
 
 <section id="non-vectorized-code" class="title-slide slide level1">
@@ -798,8 +856,8 @@
 </table>
 </section>
 
-<section id="vectorized-horvisc" class="title-slide slide level1">
-<h1>Vectorized HorVisc</h1>
+<section id="vectorized-hor_visc" class="title-slide slide level1">
+<h1>Vectorized hor_visc</h1>
 <pre class="fortran numberLines" data-code="fortran
 
 "><code data-start-line="854
@@ -1086,13 +1144,13 @@
     endif
 </code></pre>
 <ol type="1">
-<li>Promote repeated scalars to 2d arrays</li>
 <li>Move if-blocks outside loops</li>
+<li>Promote scalars to 2d arrays (sparingly)</li>
 </ol>
 </section>
 
-<section id="hor-visc-speedup" class="title-slide slide level1">
-<h1>Hor Visc Speedup</h1>
+<section id="hor_visc-speedup" class="title-slide slide level1">
+<h1>Hor_visc Speedup</h1>
 <table>
 <thead>
 <tr class="header">
@@ -1103,12 +1161,12 @@
 </thead>
 <tbody>
 <tr class="odd">
-<td>Gaea C4</td>
+<td>Intel (Gaea)</td>
 <td>2.23s → 1.27s</td>
 <td>1.75x</td>
 </tr>
 <tr class="even">
-<td>AMD @ home</td>
+<td>AMD (home)</td>
 <td>1.69s → 1.01s</td>
 <td>1.67x</td>
 </tr>
@@ -1391,6 +1449,7 @@
       CAu(I,j,k) = CAu(I,j,k) - KEx(I,j)
       if (associated(AD%gradKEu)) AD%gradKEu(I,j,k) = -KEx(I,j)
 </code></pre>
+<p>200 lines separate <code>max_fvq</code> write and read</p>
 </section>
 
 <section id="coriolis-advection-1" class="title-slide slide level1">
@@ -1431,6 +1490,7 @@
     do j=js,je ; do I=Isq,Ieq
       CAu(I,j,k) = CAu(I,j,k) - KEx(I,j)
 </code></pre>
+<p>Keep fields collocated</p>
 </section>
 
 <section id="coriolis-speedup" class="title-slide slide level1">
@@ -1475,6 +1535,7 @@
    remark #15488: --- end vector cost summary ---
    remark #25015: Estimate of max trip count of loop=3
 LOOP END</code></pre>
+<p>A typical vectorization report</p>
 </section>
 
 <section id="barotropic-optimization..." class="title-slide slide level1">
@@ -1484,11 +1545,12 @@ LOOP END</code></pre>
 LOOP END</code></pre>
 <pre class=""><code>remark #25464: Some optimizations were skipped to constrain compile
    time. Consider overriding limits (-qoverride-limits).</code></pre>
+<p>2000 lines may be too long...</p>
 </section>
 
 <section id="barotropic-speedup" class="title-slide slide level1">
 <h1>Barotropic Speedup</h1>
-<p>Engage the Override!</p>
+<p>Engage the Override! <code>-qoverride-limts</code></p>
 <table>
 <thead>
 <tr class="header">
@@ -1521,7 +1583,7 @@ LOOP END</code></pre>
 
 " data-end-line="1270
 
-" data-line-numbers="1-22|1|22
+" data-line-numbers="1|22
 
 " data-startFrom="1248
 
@@ -1593,6 +1655,7 @@ LOOP END</code></pre>
         / (h_shear_2d(i,k) * GV%H_to_Z + I_amax * Kv_tot(i,K))
   enddo ; enddo ! i &amp; k loops
 </code></pre>
+<p>Remove <span class="title-ref">do_i(:)</span> to improve pipeline</p>
 <aside class="notes">
 <p>So we remove them, then multiply by i_mask when writing a_cpl.</p>
 <p>This lets us keep moving contiguously though memory, and set up an uninterrupted pipeline.</p>
@@ -1667,6 +1730,8 @@ LOOP END</code></pre>
 
 " data-end-line="619
 
+" data-line-numbers="9-14|21-37
+
 " data-startFrom="578
 
 ">  if (present(inty_dpa)) then ; do J=Jsq,Jeq ; do i=is,ie
@@ -1717,7 +1782,8 @@ LOOP END</code></pre>
 <section>
 <section id="gaea-speedup" class="title-slide slide level1">
 <h1>Gaea Speedup</h1>
-<p><img data-src="img/subroutine_speedup_gaea.svg" alt="image" /></p>
+<p><img data-src="img/subroutine_speedup_gaea.svg" style="width:60.0%" alt="image" /></p>
+<p>Overall speedup of ~10%</p>
 <aside class="notes">
 <p>So several subroutines had significant speedup, maybe about 2x in some cases, a fair bit less in others.</p>
 <p>Total improvement was maybe ~10%</p>
@@ -1729,40 +1795,138 @@ LOOP END</code></pre>
 <h2>AMD Speedup</h2>
 <p><img data-src="img/subroutine_speedup.svg" alt="image" /></p>
 </section></section>
-<section id="performance-ci" class="title-slide slide level1">
-<h1>Performance CI</h1>
-<p><a href="https://github.com/marshallward/MOM6/runs/2577952059?check_suite_focus=true"><img data-src="img/perf_ci.png" style="width:50.0%" alt="image" /></a></p>
+<section>
+<section id="high-resolution-speedup" class="title-slide slide level1">
+<h1>High-resolution Speedup</h1>
+<p>1440 x 1080 x 75 points, 960 MPI ranks</p>
+<table>
+<thead>
+<tr class="header">
+<th>Subroutine</th>
+<th>Runtimes</th>
+<th>Speedup</th>
+<th>(1-core)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>hor_visc</code></td>
+<td>1.51s → 0.81s</td>
+<td>1.87x</td>
+<td>(1.75x)</td>
+</tr>
+<tr class="even">
+<td><code>CorAdCalc</code></td>
+<td>0.81s → 0.71s</td>
+<td>1.14x</td>
+<td>(1.23x)</td>
+</tr>
+<tr class="odd">
+<td><code>btstep</code></td>
+<td>4.08s → 3.53s</td>
+<td>1.22x</td>
+<td>(1.46x)</td>
+</tr>
+</tbody>
+</table>
+<p>~7% speedup of dynamic core</p>
+</section>
+<section id="vertical-viscosity-2" class="slide level2">
+<h2>Vertical viscosity</h2>
+<table>
+<thead>
+<tr class="header">
+<th>subroutine</th>
+<th>Runtimes</th>
+<th>Speedup</th>
+<th>(1-core)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>vert_visc</code></td>
+<td>3.69s → 4.24s</td>
+<td>0.87x</td>
+<td>(1x)</td>
+</tr>
+</tbody>
+</table>
+<p>NOTE: No CPU land masking</p>
+</section></section>
+<section id="performance-monitoring" class="title-slide slide level1">
+<h1>Performance Monitoring</h1>
+<table>
+<colgroup>
+<col style="width: 45%" />
+<col style="width: 55%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><a href="https://github.com/marshallward/MOM6/runs/2577952059?check_suite_focus=true"><img data-src="img/github_fms_clk.png" alt="image" /></a></td>
+<td><ul>
+<li>Run as regression test</li>
+<li>Integrate w/ GitLab CI</li>
+<li>Archive resuts to DB</li>
+</ul></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+<section id="resource-monitoring" class="title-slide slide level1">
+<h1>Resource Monitoring</h1>
+<table>
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 60%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><a href="https://github.com/marshallward/MOM6/runs/2636030847?check_suite_focus=true"><img data-src="img/github_perf.png" alt="image" /></a></td>
+<td><ul>
+<li>Expose perf metrics to CI</li>
+<li>Work in progress!!</li>
+</ul></td>
+</tr>
+</tbody>
+</table>
 </section>
 
 <section>
-<section id="moving-forward" class="title-slide slide level1">
-<h1>Moving Forward</h1>
-<p>Development guidelines:</p>
+<section id="summary" class="title-slide slide level1">
+<h1>Summary</h1>
 <ul>
-<li>Profile and identify hotspots</li>
-<li>Enable vectorization</li>
+<li>We are monitoring FLOPs and vectorization</li>
+<li>Single-core FLOP rates of ~2 GFLOPs</li>
+<li>Achievable speedups of ~1.5x - 2x</li>
+<li>Translates to large parallel jobs</li>
+<li>Infrastructure to monitor performance underway...</li>
+</ul>
+</section>
+<section id="vectorization-process" class="slide level2">
+<h2>Vectorization Process</h2>
+<dl>
+<dt>Phase 1</dt>
+<dd><p>Enable vectorization, confirm optimizations</p>
+</dd>
+<dt>Phase 2</dt>
+<dd><p>Minimize RAM access, collocate arrays</p>
+</dd>
+<dt>Phase 3</dt>
+<dd><p>Memory alignment, more stack usage, peel loops</p>
+</dd>
+<dt>Phase 4</dt>
+<dd><p>Redesign to optimize <em>arithmetic intensity</em></p>
+</dd>
+</dl>
+</section>
+<section id="guidelines-for-contributors" class="slide level2">
+<h2>Guidelines for Contributors</h2>
+<ul>
 <li>Avoid if-blocks in loops</li>
 <li>Keep references close together</li>
-<li>Reduce memory access</li>
+<li>Minimize array reads/writes</li>
 <li>Keep functions small (&lt;2000 lines?)</li>
-</ul>
-</section>
-<section id="things-we-havent-talked-about" class="slide level2">
-<h2>Things we haven't talked about</h2>
-<ul>
-<li>Array alignment and peel loops</li>
-<li>Heap vs Stack (incl. alignment)</li>
-<li>Pipelining</li>
-<li>Arithmetic Intensity</li>
-</ul>
-</section>
-<section id="more-things-we-havent-talked-about" class="slide level2">
-<h2>More things we haven't talked about</h2>
-<p>Multicore/node jobs</p>
-<ul>
-<li>Clock speed throttling</li>
-<li>Sharing the RAM bandwidth + NUMA</li>
-<li>perf on MPI jobs</li>
 </ul>
 </section></section>
 <section id="apocrypha" class="title-slide slide level1">
@@ -1773,12 +1937,12 @@ LOOP END</code></pre>
 <section>
 <section id="whence-gpus" class="title-slide slide level1">
 <h1>Whence GPUs?</h1>
-<p>One core vs 1 GPU process</p>
+<p>One core vs 1 GPU task</p>
 <p><img data-src="img/p1_gpu_flops.svg" style="width:60.0%" alt="image" /></p>
 </section>
 <section id="whence-gpus-1" class="slide level2">
 <h2>Whence GPUs?</h2>
-<p>6 cores vs 6 GPU procs</p>
+<p>6 cores vs 6 GPU tasks</p>
 <p><img data-src="img/p6_gpu_flops.svg" style="width:60.0%" alt="image" /></p>
 </section></section>
 <section>
@@ -1793,12 +1957,11 @@ LOOP END</code></pre>
       enddo
    enddo
 enddo</code></pre>
-<p>Very non-contiguous! Stay on target!</p>
-<p>Reorder to (k,i,j)</p>
+<p>Very non-contiguous! Reorder to (k,i,j)</p>
 </section>
 <section id="barotropic-kij-speedup" class="slide level2">
 <h2>Barotropic kij Speedup</h2>
-<p><img data-src="img/subroutine_speedup_bt.svg" alt="image" /></p>
+<p><img data-src="img/subroutine_speedup_bt.svg" style="width:70.0%" alt="image" /></p>
 </section>
 <section id="reordering-problems" class="slide level2">
 <h2>Reordering problems</h2>
@@ -1814,8 +1977,8 @@ enddo</code></pre></li>
 </ol>
 <p>Work in progress...</p>
 </section></section>
-<section id="ops-per-cycle" class="title-slide slide level1">
-<h1>Ops per cycle</h1>
+<section id="answer-changing-speedups" class="title-slide slide level1">
+<h1>Answer-changing Speedups</h1>
 <p>This is slow:</p>
 <pre><code>botfn_2d(i,k) = 1.0 / (1.0 + 0.09*z2*z2*z2*z2*z2*z2)</code></pre>
 <p>This is faster:</p>
@@ -1823,23 +1986,9 @@ enddo</code></pre></li>
 botfn_2d(i,k) = 1.0 / (1.0 + 0.09 * (z2_sq * z2_sq * z2_sq))</code></pre>
 <ol type="1">
 <li>Fewer operations (3 vs 5 mults)</li>
-<li>Fewer instructions: Two can be pipelined!</li>
+<li>Fewer instructions: Two can be pipelined</li>
 </ol>
-<p>But changes answers...</p>
-</section>
-
-<section id="heap-vs-stack" class="title-slide slide level1">
-<h1>Heap vs Stack</h1>
-<dl>
-<dt>Stack</dt>
-<dd><p>Local memory created by the function</p>
-</dd>
-<dt>Heap</dt>
-<dd><p>External global memory, <span class="title-ref">allocate()</span></p>
-</dd>
-</dl>
-<p>Compilers cannot manipulate heap memory, must work around ambiguity.</p>
-<p>Stack memory can be <em>aligned</em> for better performance.</p>
+<p>... but changes answers</p>
 </section>
 
 <section id="excessive-stack-1" class="title-slide slide level1">
